@@ -24,9 +24,11 @@ This essay surveys the key projects building the infrastructure, examines how th
 
 4. **victionchain (BuildOnViction, 182 stars)** — A Proof-of-Stake voting consensus blockchain, illustrating an alternative to mining-based security: validators are chosen by stake-weighted voting, making the governance mechanism itself the consensus layer.
 
-5. **BlockVote (karimelmasry42)** — A blockchain voting system with a particular focus on the **zk-SNARK tally path**, using zero-knowledge proofs to enable private yet verifiable on-chip vote counts. The project's smart contract documentation details how encrypted votes can be aggregated without revealing individual choices, representing the cutting edge of cryptographic voting research.
+5. **KashifCh-eth/blockchain-voting-system (46 stars)** — A lightweight JavaScript-based blockchain voting system that demonstrates the minimum viable architecture: deploying a simple smart contract, registering voters, and recording votes on-chain. Its simplicity makes it an excellent pedagogical reference for understanding the baseline mechanics before layering on advanced cryptography.
 
-6. **Hauptbuch (palasek)** — A smart contract architecture that includes a dedicated voting contract module with a documented interface in `docs/contracts/VOTING-CONTRACT.md`. Illustrates the modular approach: separate contracts for voting, tallying, and execution, each with clearly defined interfaces and testnet deployment artifacts.
+6. **BlockVote (karimelmasry42)** — A blockchain voting system with a particular focus on the **zk-SNARK tally path**, using zero-knowledge proofs to enable private yet verifiable on-chain vote counts. The project's smart contract documentation details how encrypted votes can be aggregated without revealing individual choices, representing the cutting edge of cryptographic voting research.
+
+7. **Hauptbuch (palasek)** — A smart contract architecture that includes a dedicated voting contract module with a documented interface in `docs/contracts/VOTING-CONTRACT.md`. Illustrates the modular approach: separate contracts for voting, tallying, and execution, each with clearly defined interfaces and testnet deployment artifacts.
 
 ### B. DAO Governance Platforms
 
@@ -124,7 +126,69 @@ function countMemberVotes(address member) public view returns (uint256) {
 ```
 This is simple and egalitarian in a "one-share-one-vote" sense, but it creates well-documented attack vectors (see Section III).
 
-### E. Quadratic Voting: Reducing Plutocracy
+### E. Signature-Based Voting: EIP-2612 & EIP-712
+
+A growing number of contracts are adopting **signature-based voting** that lets holders authorize votes off-chain via cryptographic signatures, then verifies them on-chain. This eliminates the need for users to hold ETH for gas when voting — a critical accessibility improvement.
+
+The **Wadoozie/SmartContracts** repository illustrates two key standards in action:
+
+- **ERC-2612 (Permit)** — `/contracts-flat/Wadoozie.sol` implements the ERC-20 Permit extension, allowing approvals to be made via signed messages rather than on-chain transactions. In governance contexts, this means a token holder can sign a message authorizing a vote, and a relayer can submit it to the chain *without the holder paying gas*. The permit uses `DOMAIN_SEPARATOR`, `nonces`, and `allowance` fields to prevent replay attacks:
+```solidity
+function permit(address owner, address spender, uint256 value,
+                uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
+    // Verify EIP-712 structured data signature
+    // Check deadline and nonce to prevent replay
+    // Update allowance on-chain
+}
+```
+
+- **EIP-712 Typed Structured Data** — `/contracts-flat/Headquarters.sol` uses EIP-712 for domain-separated signing. In governance, this means a vote message is structured as:
+```
+{
+    string name;      // "GovernanceVote"
+    string version;   // "1"
+    uint256 chainId;
+    address verifyingContract;
+}
+{
+    bytes32 proposalId;
+    uint8 support;    // 0=Against, 1=For, 2=Abstain
+    uint256 weight;
+    uint256 deadline;
+}
+```
+This signed structure prevents vote replay across chains and contexts — a single signature is valid only for the specific proposal, support choice, and chain it was cast on.
+
+The practical impact: signature-based voting enables **gasless voting** where the deed (the on-chain verification) is paid for by a relayer, but the authorization (the signature) belongs to the token holder. This is how Snapshot operates at scale, and it's increasingly being adopted for on-chain execution as well.
+
+### F. Staking for Voting Power: The waihungho Pattern
+
+The **waihungho/smart-contracts** repository demonstrates another important pattern: **staking tokens to earn voting power**, with explicit economic incentives and pause functionality:
+
+```solidity
+function stakeTokensForVotingPower(uint256 _amount) public whenNotPaused {
+    // In a real implementation, you would integrate with an ERC20 token contract.
+    // For simplicity, the contract mints voting-power tokens proportionally.
+    // Voting power = staked amount × time-weighted coefficient
+    _mint(msg.sender, _amount);
+}
+```
+
+This pattern introduces a **time dimension** to voting power: the longer you stake, the more power you accumulate. This mitigates flash-loan attacks (you can't borrow tokens, vote, and return them within the same block if voting power accrues over time) and encourages sustained participation over speculative governance capture.
+
+The `whenNotPaused` modifier also introduces an **emergency stop** mechanism — a governance-level circuit breaker that can halt voting during detected attacks or disputes. This is a crucial but often overlooked feature: the ability to *pause* governance when it is being abused.
+
+### G. DAAC: Governance for Non-Financial Communities
+
+The same repository includes a **Decentralized Autonomous Art Collective (DAAC)** contract (`src/smart_contract_1744063243487.sol`), which extends the governance pattern beyond financial protocols:
+
+- **Dynamic Membership** — Open application and community approval process for artists, replacing token-gated access with reputation-gated access.
+- **Treasury Management** — Transparent and community-governed treasury for DAAC activities.
+- **NFT Integration** — Governance decisions can affect NFT attributes and evolution paths.
+
+This illustrates a critical trend: DAO governance is being applied to **cultural and creative communities**, not just DeFi protocols. The governance challenges here are fundamentally different — how do you vote on aesthetic decisions? How do you prevent plutocratic capture when the "votes" are tokens but the decisions are artistic?
+
+### H. Quadratic Voting: Reducing Plutocracy
 
 A growing number of projects are experimenting with **quadratic voting** (QV), where voting power increases with the *square root* of tokens rather than linearly. This means a voter with 100 tokens has 10x the voting power of a voter with 1 token, rather than 100x — dramatically reducing the influence of whales.
 
@@ -144,19 +208,19 @@ A growing number of projects are experimenting with **quadratic voting** (QV), w
 
 Quadratic voting remains experimental and faces its own challenges: calculating square roots on-chain is gas-expensive, and it can create perverse incentives for voters to *split* their tokens across wallets to amplify their total voting power.
 
-### F. Commit-Reveal Schemes
+### I. Commit-Reveal Schemes
 
 To prevent vote selling and coercion, some systems use **commit-reveal**: voters first submit a hash of their vote (the commit phase), then later reveal the actual vote. The contract verifies the preimage of the hash. This ensures that votes cannot be bought or coerced before they are cast, because the buyer/coercer cannot verify what was committed to. TerraBioDAO's deposit-and-lock mechanism serves a similar function: voters must commit tokens for a lock period, making it costly to flip votes.
 
-### G. Off-Chain Signatures (Snapshot-Style)
+### J. Off-Chain Signatures (Snapshot-Style)
 
 To avoid gas costs, many DAOs use **off-chain voting** with on-chain verification. Voters sign a message with their private key, and a smart contract verifies the signature and aggregates votes. This is how the ENS DAO and many others operate — the *tallying* happens off-chain, but the *verification* and *execution* are on-chain. The gov4git project takes an even more radical approach: it moves the entire voting process off-chain into git operations, using cryptographic signatures on git commits as the voting mechanism. This raises a fundamental question: if the voting warrant is off-chain, can the governance decision ever be considered "on-chain" at all?
 
-### H. Zero-Knowledge Tallying
+### K. Zero-Knowledge Tallying
 
 The BlockVote project's **zk-SNARK tally path** represents the frontier of cryptographic voting. Rather than simply encrypting individual votes, zk-SNARKs allow the contract to verify that a correct tally was computed *without revealing any individual vote*. The smart contract references (`docs/smart-contracts.md` in the blockvote repo) detail how encrypted votes are aggregated through a SNARK proof that is verified on-chain, achieving both verifiability and absolute privacy.
 
-### I. Sybil-Resistant Voting
+### L. Sybil-Resistant Voting
 
 The **travisfont/travisfont** repository documents `Sybil-Resistant Voting.md`, an implementation guide that addresses one of the deepest problems in digital democracy: how do you ensure one-person-one-vote when anyone can create unlimited wallets? The document outlines implementation options including identity verification, stake-weighted voting, and reputation-based mechanisms. This is the foundational challenge that undergirds every other voting mechanism — without Sybil resistance, token-weighted voting collapses into plutocracy, and one-person-one-vote is indistinguishable from bot-driven mob rule.
 
@@ -271,7 +335,7 @@ The Skrynka model demonstrates that **decentralized governance through staked qu
 
 ### I. Accessibility & Infrastructure Barriers
 
-The Decentraland DAO's open issues reveal a less-discussed but critical problem: **the human infrastructure of digital democracy is as important as the code.** Issue #1919 reports that Ledger hardware wallet users were unable to cast votes — a significant portion of security-conscious token holders were disenfranchised by a frontend/API integration problem. Issue #1953 reveals that the governance contract's event logs exceed Alchemy's API rate limits, meaning that even the *read* infrastructure of governance can become a bottleneck.
+The Decentraland DAO's open issues reveal a less-discussed but critical problem: **the human infrastructure of digital democracy is as important as the code.** Issue #1919 reports that Ledger hardware wallet users were unable to cast votes — a significant portion of security-conscious token holders were disenfranchised by a frontend/API integration problem. Issue #1953 reveals that the governance contract's event logs exceed Alchemy's API rate limits, meaning that even the *read* infrastructure of governance can become a bottleneck. There's also an open security review offer (#1932) from a community member, signaling that the governance codebase may have unaudited vulnerabilities.
 
 The gov4git project directly addresses this: by building a desktop app and CLI that requires only git hosting (no custom blockchain infrastructure), it aims to make decentralized governance accessible to communities without blockchain expertise. This is a crucial design philosophical counterpoint to the "on-chain everything" approach.
 
@@ -299,7 +363,9 @@ The Skrynka whitepaper adds a new dimension to this debate: its encrypted file i
 
 5. **Governance Token Distribution & Concentration** — The Cardano DRep system (CIP-1211 on DRep Voting Power Concentration) highlights a problem that affects all token-weighted governance: as tokens concentrate in fewer hands, governance becomes plutocratic. The quadratic voting and conviction voting experiments, combined with the Skrynka quorum-staking model, suggest that the future may lie in **hybrid systems** that combine token-weighted, identity-verified, and time-locked participation mechanisms.
 
-6. **Legal Legitimacy** — Even if the code is perfect, can on-chain governance decisions be recognized as legally binding? The Helium HIP-19 case shows that even when a governance process produces a clear community verdict, the *enforcement* mechanism may fail. The Stacks Code of Conduct debate reveals that even the *process* of establishing governance rules can get stuck in deliberation indefinitely. The tension between "code is law" and existing legal frameworks remains the most fundamental unresolved question.
+6. **Signature-Based Voting & Gasless Participation** — The adoption of EIP-2612 Permits and EIP-712 structured data in governance contracts (as seen in the Wadoozie and waihungho implementations) points toward a future where voting requires no gas, lowering the barrier to participation dramatically. But this also introduces new attack surfaces: signed messages can be replayed, forwarded, or coerced. The domain-separation and nonce mechanisms in EIP-2612 are essential but not yet universally adopted across all governance contracts.
+
+7. **Legal Legitimacy** — Even if the code is perfect, can on-chain governance decisions be recognized as legally binding? The Helium HIP-19 case shows that even when a governance process produces a clear community verdict, the *enforcement* mechanism may fail. The Stacks Code of Conduct debate reveals that even the *process* of establishing governance rules can get stuck in deliberation indefinitely. The tension between "code is law" and existing legal frameworks remains the most fundamental unresolved question.
 
 ---
 
@@ -320,6 +386,7 @@ The path forward requires not just better cryptography, but better institutions:
 - [jormungandr — cardano-foundation (368 stars)](https://github.com/cardano-foundation/jormungandr)
 - [BlockVotes — yfgeek (283 stars)](https://github.com/yfgeek/BlockVotes)
 - [victionchain — BuildOnViction (182 stars)](https://github.com/BuildOnViction/victionchain)
+- [blockchain-voting-system — KashifCh-eth (46 stars)](https://github.com/KashifCh-eth/blockchain-voting-system-)
 - [BlockVote — karimelmasry42](https://github.com/karimelmasry42/blockvote)
 - [Hauptbuch — palasek](https://github.com/palasek/Hauptbuch)
 - [dao-contracts — DA0-DA0 (217 stars)](https://github.com/DA0-DA0/dao-contracts)
@@ -338,6 +405,8 @@ The path forward requires not just better cryptography, but better institutions:
 - [ENS Governance — test/delegatemulti.js](https://github.com/ensdomains/governance-contracts/blob/main/test/delegatemulti.js)
 - [DA0-DA0 Voting Modules](https://github.com/DA0-DA0/dao-contracts/tree/main/contracts/voting)
 - [Hauptbuch Voting Contract — docs/contracts/VOTING-CONTRACT.md](https://github.com/palasek/Hauptbuch/blob/main/docs/contracts/VOTING-CONTRACT.md)
+- [Wadoozie SmartContracts — ERC-2612 Permit & EIP-712](https://github.com/Wadoozie/SmartContracts/tree/main/contracts-flat)
+- [waihungho/smart-contracts — Staking-for-Voting-Power & DAAC](https://github.com/waihungho/smart-contracts)
 - [ynklv-token — Quadratic Voting Specs](https://github.com/peupleaelionor/ynklv-token/blob/main/contracts/smart-contract-specs.md)
 - [BlockVote — Smart Contracts zk-SNARK Reference](https://github.com/karimelmasry/blockvote/blob/main/docs/smart-contracts.md)
 - [LeapDAO Quadratic Voting — leapdao-website](https://github.com/leapdao/leapdao-website/blob/main/src/posts/quadratic-voting.md)
