@@ -20,7 +20,7 @@ These are turnkey E-voting systems that record votes as immutable blockchain tra
 | [yfgeek/BlockVotes](https://github.com/yfgeek/BlockVotes) | PHP | 283 | E-voting using **ring signatures** for ballot secrecy |
 | [KashifCh-eth/blockchain-voting-system-](https://github.com/KashifCh-eth/blockchain-voting-system-) | JavaScript | 46 | Standard blockchain voting dApp |
 
-**BlockChainVoting** is the most-starved general-purpose E-voting project on GitHub. Built as a final-year polytechnic project, it uses Solidity/Web3 for the blockchain contract, Next.js + Semantic UI React for the front-end, MongoDB/ExpressJS/Node.js for the back-end, and IPFS for image storage. The workflow: an admin creates an election, adds candidates and voters, voters receive secure credentials via email, and votes are recorded on-chain with success/failure notifications. It illustrates the basic architecture of most blockchain voting dApps: an off-chain server manages identity and email, while the on-chain contract records votes.
+**BlockChainVoting** is the most-starred general-purpose E-voting project on GitHub. Built as a final-year polytechnic project, it uses Solidity/Web3 for the blockchain contract, Next.js + Semantic UI React for the front-end, MongoDB/ExpressJS/Node.js for the back-end, and IPFS for image storage. The workflow: an admin creates an election, adds candidates and voters, voters receive secure credentials via email, and votes are recorded on-chain with success/failure notifications. It illustrates the basic architecture of most blockchain voting dApps: an off-chain server manages identity and email, while the on-chain contract records votes.
 
 **BlockVotes** distinguishes itself by using **ring signatures** to hide the voter's identity within a group of possible signers, providing ballot secrecy — a feature most simpler E-voting projects lack.
 
@@ -61,7 +61,8 @@ Open issues on that repo debate **quadratic voting** implementation, **sybil-pro
 
 ### 5. Production-Grade Governance References
 
-- **Celo Governance.sol** (inside [celo-org/celo-monorepo](https://github.com/celo-org/celo-monorepo), 805★) — ~1,700-line reference implementation for on-chain governance proposals, deployed on mainnet and audited. Features checkpoint-based voting power, timelocks, and ReentrancyGuard patterns.
+- **Celo Governance.sol** (inside [celo-org/celo-monorepo](https://github.com/celo-org/celo-monorepo), ~805★) — ~1,700-line reference implementation for on-chain governance proposals, deployed on mainnet and audited. Features checkpoint-based voting power, timelocks, and ReentrancyGuard patterns.
+- **TerraBioDAO Voting.sol** ([TerraBioDAO/dao-first-iteration](https://github.com/TerraBioDAO/dao-first-iteration)) — Modular adapter pattern separating Voting, Proposer, and Agora concerns; vote weight derived from token deposit + lock period via a Bank contract. Illustrates how DAO frameworks can compose specialized Modules (Bank, Agora, Voting) through slot-based addressing.
 
 ---
 
@@ -69,13 +70,13 @@ Open issues on that repo debate **quadratic voting** implementation, **sybil-pro
 
 ### Architectural Patterns
 
-Reading across these repositories and their `Voting.sol` / `gov.sol` / `voting.rs` files, three patterns dominate:
+Reading across these repositories and their `Voting.sol` / `Governance.sol` / `voting.rs` files, three patterns dominate:
 
 #### Pattern A: Native Protocol Voting (Jormungandr, Viction)
 
 Vote recording is built into the **consensus layer** itself. Validators stake tokens and votes are signed staking-key transactions. Simplest model — voting *is* block production — but limited to validator election, not general referenda.
 
-#### Pattern B: Smart Contract Voting (Celo, DA0-DAO, ENS)
+#### Pattern B: Smart Contract Voting (Celo, DA0-DAO, ENS, TerraBioDAO)
 
 The dominant pattern for general-purpose governance. A smart contract stores:
 
@@ -83,25 +84,66 @@ The dominant pattern for general-purpose governance. A smart contract stores:
 2. **Proposal state machine** — draft → discussion → voting → timelock → execution.
 3. **Vote tallying** — weighted by token balance, quadratic weight, or reputation; tallied on-chain.
 
-**From Celo `Governance.sol`** (2,700 lines, audited, mainnet-deployed):
+**From Celo `Governance.sol`** (~1,700 lines, audited, mainnet-deployed):
+
 ```solidity
 enum VoteValue { None, Abstain, No, Yes }
 struct UpvoteRecord { uint256 proposalId; uint256 weight; }
+struct VoteRecord  { uint256 proposalId; uint256 yesVotes; uint256 noVotes; uint256 abstainVotes; }
+struct Voter       { UpvoteRecord upvote; uint256 mostRecentReferendumProposal; mapping(uint256 => VoteRecord) referendumVotes; }
+
 contract Governance is IGovernance, Ownable, Initializable, ReentrancyGuard, UsingRegistry {
     // Checkpoint-based voting power: power = balanceAt(blockNumber)
     // Timelock: proposals must wait before execution
     // ReentrancyGuard: prevents reentrancy attacks on vote casting
-    function castVote(uint256 proposalId, VoteValue voteValue) public { ... }
+
+    function propose(...) external payable returns (uint256) { ... }     // Deposit-gated proposal creation
+    function upvote(uint256 proposalId, uint256 lesser, uint256 greater) external nonReentrant returns (bool) { ... }
+    function vote(uint256 proposalId, uint256 index, VoteValue value) external nonReentrant returns (bool) { ... }
+    function votePartially(...) external nonReentrant returns (bool) { ... }  // Split yes/no/abstain
+    function revokeVotes() external nonReentrant returns (bool) { ... }
+    function execute(uint256 proposalId, uint256 index) external nonReentrant returns (bool) { ... }
 }
 ```
 
-Key mechanics:
+Key mechanics revealed by reading the full contract:
+
 - **Checkpoint-based voting power** — derived from token balance at a specific block number, preventing mid-vote manipulation (e.g., flash-loan-acquired tokens can't be used if the checkpoint was taken earlier)
-- **Timelocks** — separate proposal *enactment* from *passage*: a proposal must pass a voting period and then endure a timelock before execution, preventing flash-governance attacks
-- **Reentrancy guards** and SafeMath — standard DeFi security patterns applied to democratic processes
-- **Linked-list proposal ordering** — Celo uses an `IntegerSortedLinkedList` to efficiently iterate proposals by activation time
+- **Three-stage proposal lifecycle** — **Queue** (upvote to prioritize) → **Referendum** (cast yes/no/abstain votes) → **Execution** (timelock expires, then execute). Each stage has independent clocks and expiration conditions.
+- **Upvote queue ordering** — proposals in the queue are ordered by upvote weight using an `IntegerSortedLinkedList`, so the most-supported proposals get dequeued first when the time comes. Think of it as a continuous priority lane.
+- **Deposit-gated proposal creation** — `propose()` requires `msg.value >= minDeposit`, with the deposit refunded upon dequeuing. This suppresses spam.
+- **Vote revocation** — voters can revoke their upvote (queue stage) or referendum votes (referendum stage), and the contract updates totals accordingly. `revokeVotes()` iterates all dequeued proposals for the sender.
+- **Participation-based quorum** — `_isProposalPassing()` checks not just yes-vs-no ratio but also a **participation baseline**: the proportion of total locked gold that voted. If participation drops below the baseline quorum factor, the proposal fails even with a yes majority. This prevents a small quorum from passing sweeping changes.
+- **Constitution-specific thresholds** — different proposal *destinations* (addresses) and *function IDs* can have different passing thresholds via `setConstitution()`. Default is simple majority; specific functions (e.g., treasury transfers) can require supermajority.
+- **ReentrancyGuard on every state-changing function** — standard DeFi security pattern applied to democratic processes.
+- **Hotfix mechanism** — a privileged path for emergency upgrades: `approveHotfix` → `prepareHotfix` → `executeHotfix`, requiring both an approver AND a security council, with a time-window expiry. The hotfix is identified by a keccak256 hash of the transaction blob + salt.
+
+**From TerraBioDAO `Voting.sol`** (adapter-style modular design):
+
+```solidity
+contract Voting is ProposerAdapter {
+    enum ProposalType { CONSULTATION, VOTE_PARAMS }
+
+    struct Consultation       { string title; string description; address initiater; }
+    struct ProposedVoteParam  { bytes4 voteParamId; IAgora.Consensus consensus; uint32 votingPeriod; uint32 gracePeriod; uint32 threshold; uint32 adminValidationPeriod; }
+    struct VotingProposal     { ProposalType proposalType; Consultation consultation; ProposedVoteParam voteParam; }
+
+    mapping(bytes28 => VotingProposal) private _votingProposals;
+
+    function submitVote(bytes32 proposalId, uint256 value, uint96 deposit, uint32 lockPeriod, uint96 advancedDeposit)
+        external onlyMember
+    {
+        uint96 voteWeight = IBank(_slotAddress(Slot.BANK)).newCommitment(
+            msg.sender, proposalId, deposit, lockPeriod, advancedDeposit);
+        IAgora(_slotAddress(Slot.AGORA)).submitVote(proposalId, msg.sender, uint128(voteWeight), value);
+    }
+}
+```
+
+TerraBioDAO's design separates **Voting** from **Agora** (the tallying engine) and **Bank** (the deposit/lock module) via a slot-based addressing scheme. Vote weight is computed by the Bank — combining token deposit, lock period, and advanced deposits — then submitted to Agora for tallying. This is a clean example of **separation of concerns**: the Voting module handles proposal submission and vote casting, the Bank handles economic commitments, and Agora handles consensus logic. The `_executeProposal()` override shows how a passed VOTE_PARAMS proposal auto-applies new voting parameters, while a passed CONSULTATION proposal does nothing on-chain (it's advisory only).
 
 **From DA0-DAO (Rust/CosmWasm), `packages/dao-voting/src/voting.rs`:**
+
 ```rust
 pub trait Voting {
     fn vote(&mut self, ctx: &Ctx, proposal_id: u64, addr: String, vote: Vote) -> Result<()>;
@@ -124,6 +166,7 @@ pub fn get_voting_power_with_delegation(
 This delegation-aware design is crucial: a voter's total power includes both their own stake *plus* any stake delegated to them by others who haven't yet voted. The code handles this with a "fail-gracefully" pattern — if the delegation query fails, it assumes zero delegated power so votes can still be cast.
 
 The **vote comparison logic** reveals a careful approach to threshold arithmetic:
+
 ```rust
 pub fn compare_vote_count(votes: Uint128, cmp: VoteCmp, total_power: Uint128, passing_percentage: Decimal) -> bool {
     // Uses PRECISION_FACTOR = 10^9 for fixed-point arithmetic
@@ -142,6 +185,7 @@ pub fn compare_vote_count(votes: Uint128, cmp: VoteCmp, total_power: Uint128, pa
 The precision handling is notable: the developers consciously chose *not* to round up to avoid a proposer simultaneously passing and failing a proposal — a subtle but real risk in fixed-point arithmetic on-chain.
 
 **From generic `Voting.sol` implementations** (found across many repos):
+
 ```solidity
 function vote(uint16 _choice) public duringPoll {
     uint256 dockTokens = dock.balanceOf(msg.sender);
@@ -175,6 +219,20 @@ ENS and Snapshot use **off-chain signaling** — signed messages via web UI — 
 | Quadratic voting | DA0-DAO (debated) | Weight = √tokens_staked | Expensive to monopolize; complex to implement |
 | Ring signatures | BlockVotes, Jormungandr | Voter indistinguishable from decoys | Ballot secrecy; high computational cost |
 | zk-SNARKs / ZK proofs | ENS (Byzantium), Jormungandr | Prove voting eligibility without revealing vote | Strong privacy; trusted setup assumptions |
+
+### What the Code Tells Us: Design Choices Are Political Choices
+
+Every technical decision in these contracts is simultaneously a political decision:
+
+| Code Choice | Political Implication |
+|---|---|
+| Token-weighted voting | Plutocratic — wealth translates directly to political power |
+| Quadratic voting | Reduces plutocracy but makes voting computationally expensive and harder to reason about |
+| Timelocks | Protects against flash-governance but slows emergency response |
+| Off-chain signing (Snapshot) | Lowers participation barriers but trusts a centralized server |
+| On-chain voting | Censorship-resistant but exposes vote choices to public scrutiny |
+| Participation quorum | Prevents tiny quorums from passing sweeping changes but can deadlock governance |
+| Delegatee-weighted voting | Enables representative democracy but opensSybil and violence-coercion vectors |
 
 ---
 
@@ -210,7 +268,7 @@ A bug in a governance contract can lead to **treasury drainage, proposal manipul
 
 ### 6. On-Chain vs. Off-Chain Governance
 
-ENS and Snapshot have popularized **off-chain voting** (signed messages, with on-chain finality). This drastically reduces gas costs and participation barriers, but introduces a trust assumption: the off-chain infrastructure (a website, server) could censor, manipulate, or go offline. The tradeoff is between **cost and censorship resistance** — different projects make different bets. The blockrewardsfunding DAO (Ethereum Foundation's funding mechanism) debated this explicitly in [issue #25](https://github.com/ethereum-funding/blockrewardsfunding/issues/25), "meta-DAO options" (2019), proposing to run multiple DAO models simultaneously — Moloch, Aragon, DAOstack, Colony, multisig, CLR matching — as a trial to see which governance structure actually works.
+ENS and Snapshot have popularized **off-chain voting** (signed messages, with on-chain finality). This drastically reduces gas costs and participation barriers, but introduces a trust assumption: the off-chain infrastructure (a website, server) could censor, manipulate, or go offline. The tradeoff is between **cost and censorship resistance** — different projects make different bets. The blockrewardsfunding DAO (Ethereum Foundation's funding mechanism) debated this explicitly in [issue #25](https://github.com/ethereum-funding/blockrewardsfunding/issues/25), "meta-DAO options" (2019), proposing to run multiple DAO models simultaneously — Moloch, Aragon, DAOstack, Colony, multisig, CLR matching — as a trial to see which governance structure actually works. No clear winner has emerged.
 
 ### 7. Privacy and Coercion
 
@@ -224,6 +282,12 @@ Timelocks enable community response and "cold-off" review, but they also slow em
 
 A meta-controversy running through all these debates is the **execution gap**: governance mechanisms that are theoretically decentralized often produce centralized or ineffective outcomes in practice. The NEO, Cardano, and DAO DAO cases all point to the same structural insight — **oversight can remain decentralized, but execution cannot remain voluntary**. Strategy, treasury management, and operational decision-making must be treated as professional responsibilities with clear mandates, expectations, and accountability. This challenges the ideological core of decentralization: if the answer is always "more delegation," at what point does the system become indistinguishable from a traditional organization?
 
+The TerraBioDAO design explicitly separates VOTE_PARAMS (on-chain executable) from CONSULTATION (off-chain advisory), which is a pragmatic acknowledgment that not all governance decisions need on-chain enforcement. But it also raises a question: who decides which proposals are "consultation" vs. "executable"? The answer — the DAO's admin key — is itself a centralization point.
+
+### 10. The Precision Politics of Fixed-Point Arithmetic
+
+A micro-controversy with macro implications: the DA0-DAO developers chose to *not* round up in their `compare_vote_count` function, specifically to prevent a proposal from being both passed and rejected. This is a beautiful example of how code-level decisions carry political weight — the choice of rounding direction determines governance outcomes in edge cases. Similar decisions appear everywhere: how to count abstentions (as participating or not?), how to handle delegated votes when a delegatee changes delegation mid-proposal, how to weight votes across different proposal types. These are not bugs; they are **constitutional choices** encoded in code.
+
 ---
 
 ## Conclusion
@@ -236,6 +300,8 @@ The questions ahead are not merely technical:
 - Is formal verification a prerequisite for democratic legitimacy?
 - Can governance execution be professionalized without re-centralizing control?
 - Do timelocks protect democracy or enable paralysis?
+- When does a "consultation" become a "binding decision" — and who decides that?
+- Is the precision of fixed-point arithmetic a constitutional matter that demands formal governance?
 
 These questions require a synthesis of political theory, cryptography, game theory, and software engineering — and the essays, repos, and open issues of the digital democracy community are where that synthesis is being written.
 
@@ -251,12 +317,14 @@ These questions require a synthesis of political theory, cryptography, game theo
 | Viction | [BuildOnViction/victionchain](https://github.com/BuildOnViction/victionchain) | 182 | Go PoS voting-consensus chain |
 | DA0-DAO Contracts | [DA0-DA0/dao-contracts](https://github.com/DA0-DA0/dao-contracts) | 217 | Rust/WASM modular, composable DAO tooling; audited by Oak Security |
 | ENS Governance | [ensdomains/governance-contracts](https://github.com/ensdomains/governance-contracts) | 159 | JS identity-based DAO governance |
-| Celo Governance.sol | [celo-org/celo-monorepo](https://github.com/celo-org/celo-monorepo) | 805 | Production-grade on-chain governance reference (audited, mainnet) |
+| Celo Governance.sol | [celo-org/celo-monorepo](https://github.com/celo-org/celo-monorepo) | ~805 | Production-grade on-chain governance reference (audited, mainnet) |
+| TerraBioDAO Voting.sol | [TerraBioDAO/dao-first-iteration](https://github.com/TerraBioDAO/dao-first-iteration) | — | Modular adapter pattern; Bank/Agora/Voting separation |
 | Decentraland Governance | [decentraland/governance](https://github.com/decentraland/governance) | 49 | TypeScript virtual-world DAO |
 | Joystream Pioneer | [Joystream/pioneer](https://github.com/Joystream/pioneer) | 43 | TypeScript governance app for Joystream DAO |
-| NEO Governance Crisis | [neo-project/neo #4411](https://github.com/neo-project/neo/issues/4411) | — | "Moving toward a governance model that can actually execute" — 39 comments, 26 reactions |
+| NEO Governance Crisis | [neo-project/neo #4411](https://github.com/neo-project/neo/issues/4411) | — | "Moving toward a governance model that can actually execute" — NEP 4411 |
 | Cardano SPO Incentives | [input-output-hk/spo-incentives #55](https://github.com/input-output-hk/spo-incentives/issues/55) | — | "A Difficult Problem" — voting power centralization and staking collapse |
 | Meta-DAO Options | [ethereum-funding/blockrewardsfunding #25](https://github.com/ethereum-funding/blockrewardsfunding/issues/25) | — | "meta-DAO options" — comparing Moloch, Aragon, DAOstack, Colony models |
 | Private Voting for DReps | [cardano-foundation/CIPs PR #1201](https://github.com/cardano-foundation/CIPs/pull/1201) | — | CPS proposal for private on-chain voting in Cardano delegation |
+| Stacksgov PM | [stacksgov/pm #132](https://github.com/stacksgov/pm/issues/132) | — | Request for Comment: Stacks Code of Conduct — governance process debate (128 comments) |
 
-_Research conducted via parallel GitHub searches: repository search for "blockchain voting" and "DAO governance"; code search for Solidity/Rust on-chain voting contract implementations; issue search for decentralized governance debates, security controversies, and execution gaps._
+_Research conducted via parallel GitHub searches: repository search for "blockchain voting" and "DAO governance"; code search for Solidity/Rust on-chain voting contract implementations; issue search for decentralized governance debates, security controversies, and execution gaps. Code analysis of Celo Governance.sol (~1,700 lines, SHA 2c5fb20) and TerraBioDAO Voting.sol (330 lines, SHA fbad62b)._
