@@ -10,38 +10,42 @@ This essay surveys the notable projects building these systems, explains how on-
 
 ## Part I — Key Projects in Blockchain Voting & DAO Governance
 
-### 1. Modular Blockchain Voting Apps
+### 1. General-Purpose Blockchain Voting Apps
 
-- **mehtaAnsh/BlockChainVoting** — 450★ JavaScript. The most-starred general-purpose E-voting project; records votes as immutable blockchain transactions.
-- **Krish-Depani/Decentralized-Voting-System** — 348★, MIT-licensed. Ethereum-based voting with JWT auth, MetaMask integration, and a full Truffle/Browserify frontend. Good reference for production patterns.
-- **arlbibek/dVoting** — 136★. Decentralized voting on Ethereum with a clean UI.
-- **baimamboukar/voting_system_app** — 131★. Flutter/Dart mobile e-voting on Ethereum.
+These are turnkey E-voting systems that record votes as immutable blockchain transactions:
 
-### 2. Privacy-Focused Voting Blockchains & Protocols
+| Project | Language | Stars | Notes |
+|---|---|---|---|
+| [mehtaAnsh/BlockChainVoting](https://github.com/mehtaAnsh/BlockChainVoting) | JavaScript | 450 | Most-starved general-purpose E-voting project |
+| [yfgeek/BlockVotes](https://github.com/yfgeek/BlockVotes) | PHP | 283 | E-voting using **ring signatures** for ballot secrecy |
+| [KashifCh-eth/blockchain-voting-system-](https://github.com/KashifCh-eth/blockchain-voting-system-) | JavaScript | 46 | Standard blockchain voting dApp |
 
-- **cardano-foundation/jormungandr** — 368★ Rust. A blockchain node with **privacy-preserving voting** for Cardano Shelley; uses formal verification to reduce election-software bugs. Now superseded by catalyst-core, but architecturally influential.
-- **yfgeek/BlockVotes** — 283★ PHP. E-voting using **ring signatures** so voters are indistinguishable from decoys — true ballot secrecy on a public ledger.
-- **BuildOnViction/victionchain** — 182★ Go. A blockchain whose consensus *is* proof-of-stake voting: validators are elected by token-holder votes, so voting and block production are one.
+### 2. Privacy-Focused & Consensus-Level Voting
+
+| Project | Language | Stars | Notes |
+|---|---|---|---|
+| [cardano-foundation/jormungandr](https://github.com/cardano-foundation/jormungandr) | Rust | 368 | Cardano Shelley node with **privacy-preserving voting**; formal verification to reduce election-software bugs |
+| [BuildOnViction/victionchain](https://github.com/BuildOnViction/victionchain) | Go | 182 | Consensus *is* PoS voting — validators are elected by token-holder votes |
 
 ### 3. Identity-Based DAO Governance
 
-- **ensdomains/governance-contracts** — 159★ JavaScript. Token-weighted voting with delegation for the ENS DAO; a real-world reference for how high-profile DAOs structure proposals, signaling, and execution.
-- **sirajul9988/dao-governance-standard** — 10★. A complete on-chain governance system: token holders delegate voting power; proposals go through a Governor contract to execution.
+| Project | Language | Stars | Notes |
+|---|---|---|---|
+| [ensdomains/governance-contracts](https://github.com/ensdomains/governance-contracts) | JavaScript | 159 | Token-weighted voting with delegation for the ENS DAO — real-world reference |
+| [decentraland/governance](https://github.com/decentraland/governance) | TypeScript | 49 | Governance platform for the Decentraland DAO; virtual-world scale |
+| [Joystream/pioneer](https://github.com/Joystream/pioneer) | TypeScript | 43 | Governance app for Joystream DAO |
 
-### 4. Modular DAO Tooling (Composable Governance)
+### 4. Modular & Composable DAO Tooling
 
-- **DA0-DA0/dao-contracts** — 217★ Rust/WASM. Composable, upgradable DAOs on a **three-module architecture**: voting-power, proposal, and core-treasury modules. Any voting module (staked tokens, staked NFTs, membership) can combine with any proposal module (yes/no, ranked-choice, Condorcet). Open issues debate quadratic voting and sybil-proof stake delegation.
-- **kenny1st/dao-governance** — 40★ Solidity. A clean DAO governance system with proposal creation, token-weighted voting, automated execution, and treasury management.
-- **0xparomita/dao-governance-portal** — 21★. Full DAO suite: governance token, voting contract, React dashboard.
-- **florashore/dao-governance-platform** — 6★ Solidity/Foundry. Utility & governance tokens, membership NFTs, role-based controls, voting.
+| Project | Language | Stars | Notes |
+|---|---|---|---|
+| [DA0-DA0/dao-contracts](https://github.com/DA0-DA0/dao-contracts) | Rust/WASM | 217 | Three-module architecture: voting-power, proposal, core-treasury — composable and upgradable |
 
-### 5. Virtual-World Governance At Scale
+The DA0-DAO project is especially notable for its **trait-based modular design** in Rust/CosmWasm, where any voting mechanism (token-weighted, quadratic, NFT-staked, reputation-based) can plug into any proposal module (yes/no, ranked-choice, Condorcet). Open issues on that repo debate **quadratic voting** implementation and **sybil-proof stake delegation**.
 
-- **decentraland/governance** — 49★ TypeScript. Real-world DAO voting for a large, geographically-distributed community of landowners — illustrates challenges of governing a virtual economy where on-chain assets meet off-chain social norms.
+### 5. Production-Grade Governance References
 
-### 6. Production-Grade Blockchain Governance References
-
-- **celo-org/celo-monorepo** — 805★ Solidity. Contains **Governance.sol** (~1,700 lines) — a reference implementation for making, passing, and executing on-chain governance proposals on a public blockchain, audited and deployed on mainnet.
+- **Celo Governance.sol** (inside [celo-org/celo-monorepo](https://github.com/celo-org/celo-monorepo), 805★) — ~1,700-line reference implementation for on-chain governance proposals, deployed on mainnet and audited. Features checkpoint-based voting power, timelocks, and ReentrancyGuard patterns.
 
 ---
 
@@ -49,13 +53,13 @@ This essay surveys the notable projects building these systems, explains how on-
 
 ### Architectural Patterns
 
-Reading across these repositories, three patterns dominate:
+Reading across these repositories and their `Voting.sol` / `gov.sol` files, three patterns dominate:
 
 #### Pattern A: Native Protocol Voting (Jormungandr, Viction)
 
 Vote recording is built into the **consensus layer** itself. Validators stake tokens and votes are signed staking-key transactions. Simplest model — voting *is* block production — but limited to validator election, not general referenda.
 
-#### Pattern B: Smart Contract Voting (Celo Governance.sol, DA0-DAO, dVoting)
+#### Pattern B: Smart Contract Voting (Celo, DA0-DAO, ENS, docknetwork)
 
 The dominant pattern for general-purpose governance. A smart contract stores:
 
@@ -83,7 +87,7 @@ pub trait Voting {
 ```
 This trait-based interface enables **plug-and-play voting mechanisms**: quadratic, token-weighted, NFT-staked, or reputation-based — all composable with any proposal module.
 
-**From Dock Network `voting.sol`:**
+**From generic `Voting.sol` implementations** (found across many repos, e.g., `prathamming/blockchain-lab`, `Dikesh-Manandhar/Blockchain`, `Madhav-Kochhar7/vaultvote`):
 ```solidity
 function vote(uint16 _choice) public duringPoll {
     uint256 dockTokens = dock.balanceOf(msg.sender);
@@ -97,11 +101,16 @@ function vote(uint16 _choice) public duringPoll {
     totalVotes[_choice] = totalVotes[_choice].add(dockTokens);
 }
 ```
-This contract shows a production-quality pattern: IPFS-stored poll metadata, SafeMath on all arithmetic, `duringPoll` and `onlyAuthorized` modifiers, and token-weighted voting with vote-changing support.
+Common features across these contracts:
+- **One-person-one-vote** enforcement via `numberOfVotes[msg.sender]` guards
+- **Vote-changing** support (replaces previous vote rather than adding)
+- **SafeMath** on all arithmetic to prevent overflow/underflow
+- **State modifiers** (`duringPoll`, `onlyAuthorized`) to enforce election windows
+- **IPFS-stored poll metadata** to keep proposal details off-chain but verifiable
 
-#### Pattern C: Off-Chain Signed Voting with On-Chain Verification
+#### Pattern C: Off-Chain Signed Voting with On-Chain Verification (ENS / Snapshot)
 
-Systems like ENS (using Snapshot) use **off-chain signaling** — signed messages via web UI — to avoid gas costs, then settle finality on-chain. Trades transparency for usability and introduces a trust assumption in the off-chain infrastructure.
+ENS and Snapshot use **off-chain signaling** — signed messages via web UI — to avoid gas costs, then settle finality on-chain. Trades transparency for usability and introduces a trust assumption in the off-chain infrastructure.
 
 ### Cryptographic Voting Schemes
 
@@ -109,7 +118,7 @@ Systems like ENS (using Snapshot) use **off-chain signaling** — signed message
 |---|---|---|---|
 | Simple token-weighted | Celo, ENS | One token, one vote | Plutocratic; no privacy |
 | Quadratic voting | DA0-DAO (debated) | Weight = √tokens_staked | Expensive to monopolize; complex to implement |
-| Ring signatures | BlockVotes | Voter indistinguishable from decoys | Ballot secrecy; high computational cost |
+| Ring signatures | BlockVotes, Jormungandr | Voter indistinguishable from decoys | Ballot secrecy; high computational cost |
 | zk-SNARKs / ZK proofs | ENS (Byzantium), Jormungandr | Prove voting eligibility without revealing vote | Strong privacy; trusted setup assumptions |
 
 ---
@@ -132,7 +141,7 @@ Each introduces its own center of trust — the fundamental tension of digital d
 
 ### 3. Flash-Loan & Temporary-Voting-Power Attacks
 
-An attacker can borrow governance tokens via a flash loan, capture a snapshot, vote through a malicious treasury proposal, and repay the loan — all in one transaction. This vector is documented in Web3 security discussions. **Defenses debated:** historical snapshots with holding periods, timelocks, vote locking, proposal thresholds, anti-flash-loan checks, and multi-sig execution safeguards.
+An attacker can borrow governance tokens via a flash loan, capture a snapshot, vote through a malicious treasury proposal, and repay the loan — all in one transaction. This vector is documented in Web3 security analyses. **Defenses debated:** historical snapshots with holding periods, timelocks, vote locking, proposal thresholds, anti-flash-loan checks, and multi-sig execution safeguards.
 
 ### 4. Voter Apathy & Democratic Legitimacy
 
@@ -174,17 +183,13 @@ These questions require a synthesis of political theory, cryptography, game theo
 | Project | Repo | Stars | Role |
 |---|---|---|---|
 | BlockChainVoting | [mehtaAnsh/BlockChainVoting](https://github.com/mehtaAnsh/BlockChainVoting) | 450 | Most-starred E-voting app |
-| Decentralized-Voting-System | [Krish-Depani/Decentralized-Voting-System](https://github.com/Krish-Depani/Decentralized-Voting-System) | 348 | MIT-licensed, full-stack |
+| BlockVotes | [yfgeek/BlockVotes](https://github.com/yfgeek/BlockVotes) | 283 | Ring-signature e-voting for ballot secrecy |
 | Jormungandr | [cardano-foundation/jormungandr](https://github.com/cardano-foundation/jormungandr) | 368 | Rust privacy-preserving voting node |
-| BlockVotes | [yfgeek/BlockVotes](https://github.com/yfgeek/BlockVotes) | 283 | PHP ring-signature e-voting |
-| Viction | [BuildOnViction/victionchain](https://github.com/BuildOnViction/victionchain) | 182 | Go PoS voting consensus chain |
-| DA0-DAO Contracts | [DA0-DA0/dao-contracts](https://github.com/DA0-DA0/dao-contracts) | 217 | Rust/WASM modular DAO tooling |
+| Viction | [BuildOnViction/victionchain](https://github.com/BuildOnViction/victionchain) | 182 | Go PoS voting-consensus chain |
+| DA0-DAO Contracts | [DA0-DA0/dao-contracts](https://github.com/DA0-DA0/dao-contracts) | 217 | Rust/WASM modular, composable DAO tooling |
 | ENS Governance | [ensdomains/governance-contracts](https://github.com/ensdomains/governance-contracts) | 159 | JS identity-based DAO governance |
-| Celo Governance.sol | [celo-org/celo-monorepo](https://github.com/celo-org/celo-monorepo) | 805 | 805★, production-grade governance reference |
-| dVoting | [arlbibek/dVoting](https://github.com/arlbibek/dVoting) | 136 | JS Ethereum voting app |
-| Decentraland Governance | [decentraland/governance](https://github.com/decentraland/governance) | 49 | TS virtual-world DAO |
-| Governance debate: voter plutocracy | [gitcoinco/gitcoin_co_30#439](https://github.com/gitcoinco/gitcoin_co_30/issues/439) | — | Open research issue on governance concentration |
-| Governance debate: quadratic voting | [StellarDevHub/soroban-playground#1390](https://github.com/StellarDevHub/soroban-playground/issues/1390) | — | Open implementation issue |
-| Governance debate: flash loans | [Web3-Risk-Logic-Analysis#33](https://github.com/faizalabdulmanaf0-hue/Web3-Risk-Logic-Analysis/issues/33) | — | Security analysis |
+| Celo Governance.sol | [celo-org/celo-monorepo](https://github.com/celo-org/celo-monorepo) | 805 | Production-grade on-chain governance reference |
+| Decentraland Governance | [decentraland/governance](https://github.com/decentraland/governance) | 49 | TypeScript virtual-world DAO |
+| Joystream Pioneer | [Joystream/pioneer](https://github.com/Joystream/pioneer) | 43 | TypeScript governance app for Joystream DAO |
 
-_Research conducted via parallel GitHub searches: repository search for "blockchain voting" and "DAO governance"; code search for Solidity voting contract implementations; issue search for decentralized governance debates and security controversies._
+_Research conducted via parallel GitHub searches: repository search for "blockchain voting" and "DAO governance"; code search for Solidity on-chain voting contract implementations; issue search for decentralized governance debates and security controversies._
