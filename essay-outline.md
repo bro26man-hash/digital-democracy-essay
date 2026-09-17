@@ -6,7 +6,7 @@ The age-old promise of democracy — that every voice counts, that decisions are
 
 Two forces are driving this convergence. **Blockchain voting** aims to make elections tamper-proof, auditable, and accessible by recording votes on an immutable ledger. **DAO (Decentralized Autonomous Organization) governance** extends this logic to ongoing organizational decision-making, replacing corporate boards and parliamentary procedures with smart contracts and token-weighted votes. Together, they represent the most serious attempt since the invention of the ballot to fundamentally rethink *how* collective decisions are made.
 
-But as the open issues and debates on GitHub make clear, the road from "technically possible" to "politically legitimate" is fraught with landmines — from flash-loan-driven governance manipulation to a single misplaced Boolean operator that can hollow out quorum protections entirely, from Sybil-resistant masternode quorums to a community code-of-conduct debate that surfaces the freedom-of-speech tensions embedded in any decentralized governance model.
+But as the open issues and code repositories on GitHub make clear, the road from "technically possible" to "politically legitimate" is fraught with landmines — from flash-loan-driven governance manipulation to a single misplaced Boolean operator that can hollow out quorum protections entirely, from Sybil-resistant masternode quorums to a community code-of-conduct debate that surfaces the freedom-of-speech tensions embedded in any decentralized governance model.
 
 This essay surveys the key projects building the infrastructure, examines how the voting code actually works (and where it breaks), and maps the central controversies that define the field today.
 
@@ -24,7 +24,7 @@ This essay surveys the key projects building the infrastructure, examines how th
 
 4. **victionchain (BuildOnViction, 182 stars)** — A Proof-of-Stake voting consensus blockchain, illustrating an alternative to mining-based security: validators are chosen by stake-weighted voting, making the governance mechanism itself the consensus layer.
 
-5. **BlockVote (karimelmasry42)** — A blockchain voting system with a particular focus on the **zk-SNARK tally path**, using zero-knowledge proofs to enable private yet verifiable on-chain vote counts. The project's smart contract documentation details how encrypted votes can be aggregated without revealing individual choices, representing the cutting edge of cryptographic voting research.
+5. **BlockVote (karimelmasry42)** — A blockchain voting system with a particular focus on the **zk-SNARK tally path**, using zero-knowledge proofs to enable private yet verifiable on-chip vote counts. The project's smart contract documentation details how encrypted votes can be aggregated without revealing individual choices, representing the cutting edge of cryptographic voting research.
 
 6. **Hauptbuch (palasek)** — A smart contract architecture that includes a dedicated voting contract module with a documented interface in `docs/contracts/VOTING-CONTRACT.md`. Illustrates the modular approach: separate contracts for voting, tallying, and execution, each with clearly defined interfaces and testnet deployment artifacts.
 
@@ -44,7 +44,15 @@ This essay surveys the key projects building the infrastructure, examines how th
 
 7. **pioneer (Joystream, 43 stars)** — Governance app for the Joystream DAO, a decentralized streaming protocol. Illustrates the diversity of DAO use cases beyond finance: content moderation, protocol upgrades, and revenue allocation.
 
-8. **Joystream Council** — In addition to the governance app, Joystream's broader ecosystem explores **council-based governance** alongside token-vote mechanisms, a hybrid model that attempts to balance expertise (elected council members) with egalitarianism (token-weighted votes).
+8. **Railgun Governance (Railgun-Privacy/contract)** — `contracts/governance/Voting.sol` imports a `Delegator` contract and manages on-chain voting for the Railgun privacy protocol. Its delegation pattern (delegators vote on behalf of token holders) is a common design that separates *vote delegation* from *vote casting*, enabling liquid democracy-style participation without requiring voters to actively participate in every proposal.
+
+9. **BarnBridge DAO (BarnBridge/BarnBridge-DAO)** — `contracts/Governance.sol` extends a `Bridge` contract and uses OpenZeppelin's `SafeMath`. The `enum ProposalState` tracks the full lifecycle of proposals (pending, active, passed, rejected, executed). This illustrates how DAO governance can be tailored for cross-chain bridge protocols, where governance decisions affect multi-chain asset transfers.
+
+10. **Curve Aragon Voting (curvefi/curve-aragon-voting)** — `contracts/Voting.sol` built on Solidity 0.4.24 using the Aragon framework. Curve's governance is a real-world example of how a major DeFi protocol uses modular Aragon-based voting to manage protocol parameters, fee structures, and liquidity incentives for billions in TVL.
+
+11. **Fushuma FIP-1 (Fushuma/FIP Issue #2)** — An open governance proposal (19 comments) for a Treasury DAO mechanism using **Augmented Bonding Curves (ABC)** and decentralized governance. The proposal details a two-pool model: a Development Pool (funds ecosystem projects via DAO-gated grants) and a Liquidity Reserve Pool (provides continuous liquidity via ABC pricing). The debate reveals core tensions: who gets to vote? How is voting power allocated? What prevents whale capture? The author's response — token-weighted voting with vetoes for development fund depositors — illustrates how even the *design* of governance mechanisms is itself a contested political process.
+
+12. **Solana Governance Program (GamaEdtech/solana-governance-program Issue #2)** — A detailed governance system proposal (5 comments, labeled `documentation` + `question`) that compares on-chain, off-chain, and hybrid governance models. It covers staking as a "skin in the game" mechanism, quadratic voting as a plutocracy mitigator, and bidirectional QV (pro vs. con). The issue is explicitly tagged as both a documentation request and a question, signaling that even the *framing* of governance questions is unresolved.
 
 ---
 
@@ -55,7 +63,7 @@ This essay surveys the key projects building the infrastructure, examines how th
 At the most fundamental level, an on-chain voting contract implements three phases:
 
 1. **Commitment Phase** — Voters submit encrypted or signed commitments (either directly or through a commit-reveal scheme to prevent vote buying and coercion).
-2. **Tallying Phase** — The contract aggregates votes, either by maintaining a running count (token-weighted) or by aggregating off-chain signatures (signature-based voting, as used by Snapshot).
+2. **Tallying Phase** — The contract aggregates votes, either by maintaining a running count (token-weighted) or by aggregating off-chain signatures (Signature-based voting, as used by Snapshot).
 3. **Execution Phase** — Once quorum and approval thresholds are met, the contract executes the proposed action (e.g., transferring treasury funds, upgrading a protocol).
 
 ### B. A Real Example: TerraBioDAO's Voting.sol
@@ -120,7 +128,7 @@ This is simple and egalitarian in a "one-share-one-vote" sense, but it creates w
 
 A growing number of projects are experimenting with **quadratic voting** (QV), where voting power increases with the *square root* of tokens rather than linearly. This means a voter with 100 tokens has 10x the voting power of a voter with 1 token, rather than 100x — dramatically reducing the influence of whales.
 
-- **ynklv-token (peupleaelionor)** — Implements quadratic voting with an EPS (Equity Pawer Score) activity multiplier from an oracle. The voting weight formula `sqrt(balance)` is explicitly documented, showing how real-world QV implementations account for *active participation* beyond mere token holdings.
+- **ynklv-token (peupleaelionor)** — Implements quadratic voting with an EPS (Equity Power Score) activity multiplier from an oracle. The voting weight formula `sqrt(balance)` is explicitly documented, showing how real-world QV implementations account for *active participation* beyond mere token holdings.
 
 - **Arcana (Kuuhaku-web)** — Documents "Quadratic Voting adalah sistem voting di mana biaya voting meningkat secara kuadratik" — a cost-quadratic voting model where the marginal cost of each additional vote increases quadratically, creating a natural economic brake on whale dominance.
 
@@ -129,6 +137,10 @@ A growing number of projects are experimenting with **quadratic voting** (QV), w
 - **SYS-Labs/pob-voting-dapp** — Implements a hybrid model where three voting entities each have equal weight (1 vote each), demonstrating that *entity-level* equality can coexist with *token-level* inequality within a single contract.
 
 - **LeapDAO's QV Implementation (leapdao-website / deora-earth/voting-contracts)** — LeapDAO deployed a production Quadratic Voting solution at the Volt Germany party congress and ETHTurin hackathon. Their implementation uses **Optimized Sparse Merkle Trees** (Solidity, ERC-1948 Voting Balance cards) to record votes in a user-centric data structure where fewer hashes need to be computed for partly filled structures. Voters receive Voice Credits, spend them on vote tokens via a booth contract, and votes are recorded on their balance card. Withdrawals burn vote tokens and update the card accordingly. Their real-world data from Volt Germany shows that ~10% of transaction volume was withdrawal transactions, indicating voters adjusted their votes after initial casting — evidence of deliberation within the mechanism itself.
+
+- **MontrealAI/AGIJobsv0** — `contracts/v2/QuadraticVoting.sol` uses OpenZeppelin's `ReentrancyGuard` and `IERC20` / `SafeERC20` — a production-grade phalanx against reentrancy attacks that QV contracts are particularly vulnerable to due to their multi-step token interactions.
+
+- **poa-box/POP** — Documents a hybrid model: "Voting power scales with token holdings. This rewards contribution (via ParticipationTokens earned through work) while optionally applying quadratic dampening." This illustrates a design philosophy that doesn't commit fully to one mechanism but layers them.
 
 Quadratic voting remains experimental and faces its own challenges: calculating square roots on-chain is gas-expensive, and it can create perverse incentives for voters to *split* their tokens across wallets to amplify their total voting power.
 
@@ -166,7 +178,7 @@ Instead of:
 if (yesVotes > 60% && quorum > 30%) executeProposal();
 ```
 
-The `OR` instead of `AND` meant that even with only 10% quorum, a proposal with 80% approval could be executed. An attacker with a small token holding could pass malicious proposals by simply waiting for low participation. The lesson: **in DAOs, the smart contract is the constitution — and a single logical error is a constitutional crisis.**
+The `OR` instead of `AND` meant that even with only 10% quorum, a proposal with 80% approval could be executed — a reversal of the intended logic, illustrating how the same theoretical framework can produce opposite governance outcomes depending on a single character. The attacker could exploit this by suppressing participation (destroy legitimacy) and then pushing through their preferred armshot; by contrast, if intended logic were AND, destroying legitimacy would simply render quorums impossible. The lesson: **in DAOs, the smart contract is the constitution — and a single logical error is a constitutional crisis.**
 
 This is not merely hypothetical. The TerraBioDAO Voting.sol contract itself has a `_executeProposal()` function whose implementation is explicitly noted as incomplete (`// TODO error should be handled here and other type of action function of type`), highlighting how even audited, production-grade DAO code can have unhandled edge cases.
 
@@ -228,7 +240,20 @@ Issue #132 in the stacksgov/pm repository (128 comments, open since February 202
 
 This debate reveals that **governance is not just about decision-making procedures — it's about the values those procedures encode.** A Code of Conduct is a miniature constitution, and getting it right requires navigating questions that have no technical answers.
 
-### G. The Skrynka Masternode Model: Decentralized Governance Through Staked Quorums
+### G. Governance Debates in the Wild: Fushuma & Solana
+
+Two open issues illustrate how governance theory is being contested in real time:
+
+**Fushuma FIP-1 (Fushuma/FIP Issue #2)** — An open debate (19 comments, collaborator-authored) over a Treasury DAO mechanism. The community's questions surface core governance design issues that academic papers often abstract away:
+- *Who gets to vote?* The author responds: token holders, with a minimum threshold being considered, plus development-fund depositors get veto power (1 veto per $10K deposited).
+- *How is voting power figured?* Token-weighted, with vetoes as a counterweight. The community pushes back on whether this truly prevents dominance.
+- *How to prevent whale capture?* The author proposes vetoes for depositors, but commenters note this still centralizes power. A community member suggests a stabilization fund for market volatility — which the author accepts, noting the Enhanced Bonding Curve (EBC) model will handle it.
+
+The debate reveals that even the *specification* of a governance mechanism is a political negotiation, not a technical derivation. The mathematical EBC model (with equations for reserve ratios, invariant functions, and price functions) is presented as "to be defined in subsequent FIPs," underscoring that **the economic assumptions are as contested as the code.**
+
+**Solana Governance Program (GamaEdtech/solana-governance-program Issue #2)** — A 5-comment open issue that frames the fundamental choice between on-chain, off-chain, and hybrid governance. Its detailed coverage of staking vs. quadratic voting, bidirectional QV, credit renewal cycles, and proposal success criteria is remarkable for a `documentation`+`question` issue. It quotes the cost function explicitly: `Cost = (Number of Votes)^2`, and provides a worked example with Alice, Bob, and Charlie allocating 10 credits each. The issue's persistence (open since January 2025, last updated June 2025) suggests the community hasn't converged on an answer — the question of *which governance model to implement* remains genuinely open.
+
+### H. The Skrynka Masternode Model: Decentralized Governance Through Staked Quorums
 
 The Skrynka storage network whitepaper (filecoin-project/community Issue #760) is a 40+ page design document that offers the most thorough analysis of decentralized governance mechanics found on GitHub. Its masternode quorum system provides a governance model that could inform DAO design:
 
@@ -244,7 +269,7 @@ The Skrynka storage network whitepaper (filecoin-project/community Issue #760) i
 
 The Skrynka model demonstrates that **decentralized governance through staked quorums is feasible but requires careful economic design** — and that the "right" number of quorum members is a critical parameter that balances security against performance.
 
-### H. Accessibility & Infrastructure Barriers
+### I. Accessibility & Infrastructure Barriers
 
 The Decentraland DAO's open issues reveal a less-discussed but critical problem: **the human infrastructure of digital democracy is as important as the code.** Issue #1919 reports that Ledger hardware wallet users were unable to cast votes — a significant portion of security-conscious token holders were disenfranchised by a frontend/API integration problem. Issue #1953 reveals that the governance contract's event logs exceed Alchemy's API rate limits, meaning that even the *read* infrastructure of governance can become a bottleneck.
 
@@ -252,7 +277,7 @@ The gov4git project directly addresses this: by building a desktop app and CLI t
 
 If digital democracy is to fulfill its promise, it must work not just for sophisticated Web3 users but for ordinary citizens with ordinary hardware and connectivity.
 
-### I. Privacy vs. Transparency: The Fundamental Tension
+### J. Privacy vs. Transparency: The Fundamental Tension
 
 Blockchain's transparency is both its greatest strength and its greatest vulnerability for voting. On-chain votes are public. This enables auditability but also enables **vote buying, coercion, and surveillance**. Projects like jormungandr and BlockVotes (using ring signatures) represent attempts to solve this, but no approach has yet achieved both full verifiability and full ballot secrecy at scale.
 
@@ -304,6 +329,9 @@ The path forward requires not just better cryptography, but better institutions:
 - [gov4git — gov4git (216 stars)](https://github.com/gov4git/gov4git)
 - [governance — decentraland (49 stars)](https://github.com/decentraland/governance)
 - [pioneer — Joystream (43 stars)](https://github.com/Joystream/pioneer)
+- [Railgun Governance — Railgun-Privacy/contract](https://github.com/Railgun-Privacy/contract)
+- [BarnBridge DAO — BarnBridge/BarnBridge-DAO](https://github.com/BarnBridge/BarnBridge-DAO)
+- [Curve Aragon Voting — curvefi/curve-aragon-voting](https://github.com/curvefi/curve-aragon-voting)
 
 ### On-Chain Code
 - [TerraBioDAO Voting.sol — src/adapters/Voting.sol](https://github.com/TerraBioDAO/dao-first-iteration/blob/main/src/adapters/Voting.sol)
@@ -314,6 +342,7 @@ The path forward requires not just better cryptography, but better institutions:
 - [BlockVote — Smart Contracts zk-SNARK Reference](https://github.com/karimelmasry/blockvote/blob/main/docs/smart-contracts.md)
 - [LeapDAO Quadratic Voting — leapdao-website](https://github.com/leapdao/leapdao-website/blob/main/src/posts/quadratic-voting.md)
 - [deora-earth/voting-contracts — Optimized Sparse Merkle Trees](https://github.com/deora-earth/voting-contracts)
+- [MontrealAI/AGIJobsv0 — QuadraticVoting.sol](https://github.com/MontrealAI/AGIJobsv0/blob/main/contracts/v2/QuadraticVoting.sol)
 - [travisfont — Sybil-Resistant Voting Implementation](https://github.com/travisfont/travisfont/blob/main/Solidity/Sybil-Resistant%20Voting.md)
 
 ### Vulnerability & Security References
@@ -326,5 +355,7 @@ The path forward requires not just better cryptography, but better institutions:
 - [Helium HIP Issue #270 — HIP19 Discussion: Revocation of Nebra's Approval](https://github.com/helium/HIP/issues/270)
 - [Stacks Issue #132 — Request for Comment: Stacks Code of Conduct (Beta)](https://github.com/stacksgov/pm/issues/132)
 - [Filecoin Community Issue #760 — Skrynka: Decentralized, Self-Healing, Contract-Funded Storage Network](https://github.com/filecoin-project/community/issues/760)
+- [Fushuma FIP Issue #2 — Treasury DAO Mechanism (19 comments)](https://github.com/Fushuma/FIP/issues/2)
+- [Solana Governance Program Issue #2 — Governance System Proposal (5 comments)](https://github.com/GamaEdtech/solana-governance-program/issues/2)
 - [Cardano CIPs PR #1211 — DRep Voting Power Concentration](https://github.com/cardano-foundation/CIPs/pull/1211)
 - [Decentraland Governance Issues](https://github.com/decentraland/governance/issues)
