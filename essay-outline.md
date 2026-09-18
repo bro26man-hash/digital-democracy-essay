@@ -2,167 +2,175 @@
 
 ## Introduction
 
-The promise of digital democracy is radical: that governance — from nation-states to workplace co-ops — could be run transparently, immutably, and inclusively through open-source code and distributed consensus. Yet the gap between that promise and its practice remains wide. This essay examines three pillars of the emerging digital-democracy landscape: **blockchain-based voting systems**, **DAO governance frameworks**, and the **on-chain voting contracts** that make them possible — and then confronts the deep controversies that keep this space contested.
+The promise of digital democracy is simple yet radical: that governance — from corporate boards to nation-states — can be made more transparent, inclusive, and resistant to corruption by moving decision-making on-chain. Blockchains offer an immutable ledger, cryptographic identity, and programmable rules that could, in principle, eliminate the black boxes of traditional politics. But a decade of experiments has revealed deep tensions between the ideals of decentralization and the realities of implementation. This essay explores the key projects building blockchain voting and DAO governance systems, examines how on-chain voting contracts actually work, and surveys the central controversies — from plutocracy and voter apathy to security vulnerabilities and accessibility gaps — that define the current debate.
 
 ---
 
-## Part I — Key Projects: The Landscape of Digital Democracy
+## Part I — Key Projects in Blockchain Voting & DAO Governance
 
-### 1. Blockchain E-Voting Systems
+### 1. BlockChainVoting (mehtaAnsh/BlockChainVoting)
+- **Stars:** 450 | **Language:** JavaScript (Solidity/Web3, Next.js, MongoDB, IPFS)
+- **What it does:** A full-stack E-voting dApp where administrators create elections, register candidates and voters, and voters cast ballots via MetaMask. Results are recorded on-chain; candidate images are stored on IPFS.
+- **Significance:** Represents the most-starred direct "blockchain voting" project on GitHub and illustrates the typical architecture of a chain-based election: off-chain frontend, on-chain vote tallying, and IPFS for auxiliary data.
+- **Limitations:** Relies on a centralized backend (MongoDB/Express) for voter registration and email notifications, which re-introduces a trust bottleneck. The whitelist-based voter model assumes a central authority decides who may vote.
 
-| Project | Stars | Language | Key Idea |
-|---|---|---|---|
-| **[mehtaAnsh/BlockChainVoting](https://github.com/mehtaAnsh/BlockChainVoting)** | 450 | JavaScript / Solidity | A full-stack e-voting dApp: candidate registration, voter authentication via email, on-chain vote casting, and IPFS-based media storage. Built as a final-year polytechnic project, it illustrates how even a student project can demonstrate the end-to-end pipeline of on-chain elections. |
-| **[yfgeek/BlockVotes](https://github.com/yfgeek/BlockVotes)** | 283 | PHP | An e-voting system leveraging **ring signatures** for anonymity — a cryptographic approach that hides individual voter choices while still allowing verification that each vote was cast by an eligible voter. |
-| **[cardano-foundation/jormungandr](https://github.com/cardano-foundation/jormungandr)** | 368 | Rust | A privacy-focused voting blockchain node from the Cardano ecosystem, emphasizing formal methods and peer-reviewed cryptography — a contrast to the ad-hoc nature of many Ethereum-based voting dApps. |
-| **[BuildOnViction/victionchain](https://github.com/BuildOnViction/victionchain)** | 182 | Go | A blockchain powered by a **Proof-of-Stake voting consensus** — where validators are elected by token holders, embedding governance directly into the consensus layer. |
+### 2. BlockVotes (yfgeek/BlockVotes)
+- **Stars:** 283 | **Language:** PHP
+- **What it does:** An E-voting system built on blockchain using **ring signatures** to anonymize votes.
+- **Significance:** One of the few projects that tackles the privacy problem directly. Ring signatures (popularized by Monero) allow a voter to sign a vote without revealing which key signed it, providing unlinkability.
+- **Limitations:** PHP is an unusual choice for blockchain interaction; the project's audit status and production readiness are unclear.
 
-**Observation:** Most blockchain-voting projects are still proof-of-concept or demo-grade. The difficulty of securing voter anonymity, preventing double-voting, and ensuring usability for non-cryptographic users remains largely unsolved at scale.
+### 3. Jormungandr (cardano-foundation/jormungandr)
+- **Stars:** 368 | **Language:** Rust
+- **What it does:** A privacy-focused blockchain node implementation from the Cardano Foundation, with built-in support for private voting.
+- **Significance:** Represents the institutional, research-driven approach — Cardano's peer-reviewed methodology applied to governance infrastructure.
 
-### 2. DAO Governance Frameworks
+### 4. VictionChain (BuildOnViction/victionchain)
+- **Stars:** 182 | **Language:** Go
+- **What it does:** A blockchain powered by **Proof-of-Stake Voting Consensus** — validators are elected by token holders through on-chain voting.
+- **Significance:** Demonstrates a hybrid model where voting is not an application layered on top of a chain, but the consensus mechanism itself.
 
-| Project | Stars | Language | Key Idea |
-|---|---|---|---|
-| **[DA0-DA0/dao-contracts](https://github.com/DA0-DA0/dao-contracts)** | 217 | Rust (CosmWasm) | **The most sophisticated open-source DAO framework.** Modular architecture: every DAO = a voting-power module + proposal modules + a treasury core. Supports staked-token voting, NFT-staked voting, membership voting, and multiple proposal types (yes/no, multi-choice, Condorcet ranked-choice). Any module can be swapped with any other via standard interfaces — true composability. Audited by Oak Security multiple times. |
-| **[decentraland/governance](https://github.com/decentraland/governance)** | 49 | TypeScript | The governance dApp for the Decentraland metaverse DAO. Uses **Snapshot** for off-chain vote hashing, on-chain enactment via a committee. Supports multiple voting strategies: ERC-20 balance, ERC-721 multipliers (LAND, ESTATE, WEARABLE), delegation, and multichain. Proposals go through pending → active → finished → passed/rejected → enacted pipeline. |
-| **[ensdomains/governance-contracts](https://github.com/ensdomains/governance-contracts)** | 159 | JavaScript | The ENS DAO's on-chain governance contracts. ENS is one of the longest-running and most successful DAOs, managing a multi-million-dollar treasury through a recognizable, simple governance process. |
-| **[Joystream/pioneer](https://github.com/Joystream/pioneer)** | 43 | TypeScript | Governance app for the Joystream DAO, a streaming-platform-oriented DAO with council-based decision-making. |
+### 5. DAO DAO (DA0-DA0/dao-contracts)
+- **Stars:** 217 | **Language:** Rust (WebAssembly)
+- **What it does:** A modular, composable, and upgradable DAO framework. Every DAO is composed of three interchangeable modules: **voting power** (tokens, NFTs, membership), **proposals** (yes/no, multiple-choice, ranked-choice/Condorcet), and **core** (treasury).
+- **Significance:** The most architecturally sophisticated governance toolkit in the ecosystem. Its module standard interfaces mean any voting module can pair with any proposal module — a true "governance lego" approach.
+- **Audit status:** Audited multiple times by Oak Security; reports are public.
 
-**Observation:** DAO governance ranges from highly modular frameworks (DAO DAO) to application-specific dApps (Decentraland). The common thread is the shift from "executives decide" to "token holders vote" — but whether that's an improvement is contested.
+### 6. ENS Governance Contracts (ensdomains/governance-contracts)
+- **Stars:** 159 | **Language:** JavaScript (Hardhat)
+- **What it does:** The smart contracts governing the Ethereum Name Service DAO, including proposal submission, voting, and execution. Includes airdrop functionality and an API layer.
+- **Significance:** One of the oldest and highest-stakes real-world DAO deployments — ENS governs a critical internet infrastructure registry with over $300M in treasury.
 
----
-
-## Part II — How On-Chain Voting Code Works
-
-### 2.1 The Core Voting Contract Pattern
-
-Most on-chain voting contracts follow a shared structural pattern, visible across multiple codebases:
-
-```solidity
-contract Voting {
-    // 1. State: who has voted, what proposals exist
-    mapping(address => bool) public hasVoted;
-    Proposal[] public proposals;
-
-    // 2. Voting power: token balance, NFT holdings, or delegation
-    function getVotingPower(address voter) public view returns (uint256);
-
-    // 3. Cast vote: commit then reveal (for anonymity) or direct
-    function vote(uint256 proposalId, uint8 candidate) public;
-
-    // 4. Tally: count votes, check quorum, determine outcome
-    function tally(uint256 proposalId) public;
-}
-```
-
-### 2.2 Key Implementation Patterns
-
-| Pattern | Description | Where to See It |
-|---|---|---|
-| **Commit-Reveal** | Voters submit a hash of their choice first, then reveal later — prevents vote-buying and coercion. | BlockVotes (ring signature approach) |
-| **Quadratic Voting** | Cost of votes increases quadratically — one vote costs 1 wei, two cost 4, three cost 9 — reducing whale dominance. | DAO DAO's `condorcet` proposal module; referenced in HybridVoting docs |
-| **Conviction Voting** | Votes accumulate over time; withdrawing early forfeits accumulated weight — incentivizes long-term commitment. | Referenced in `clawdbotatg/clawd-pfp-market` governance docs |
-| **Delegation** | Voters can delegate their voting power to trusted representatives — liquid democracy in code. | Decentraland's Snapshot `delegation` strategy; ENS governance |
-| **Multi-Constituency** | Different stakeholder classes (workers, members, users) each get a weighted slice of total governance power. | **HybridVoting** (poa-box/POP `HYBRID_VOTING.md`) — 527-line spec for class-based governance |
-
-### 2.3 The HybridVoting Model — A Deep Dive
-
-The most ambitious on-chain governance spec we found is **HybridVoting** from the POA ecosystem. Its core innovation is the `ClassConfig` struct:
-
-```solidity
-struct ClassConfig {
-    ClassStrategy strategy;   // How voting power is calculated
-    uint8 slicePct;           // Percentage of total voting weight (1-100)
-    bool quadratic;           // Reduce whale dominance (for token strategies)
-    uint256 minBalance;       // Minimum stake required
-    address asset;            // Token address (for ERC20 strategies)
-    uint256[] hatIds;         // Required role(s) to participate
-}
-```
-
-A worker cooperative might allocate:
-- **50%** to Workers (direct democracy — one-person-one-vote)
-- **35%** to Labor contributors (token-weighted by work performed)
-- **15%** to Active users (voice proportional to usage)
-- **10%** to Community supporters (participation without insider status)
-
-Each constituency votes within their class; the final outcome blends all voices according to their designated weight. This is a direct challenge to the "one token, one vote" orthodoxy.
+### 7. Decentraland Governance (decentraland/governance)
+- **Stars:** 49 | **Language:** TypeScript
+- **What it does:** The governance dApp for the Decentraland DAO, running on Snapshot with multiple voting strategies (ERC-20 balance, delegation, ERC-721 multipliers, estate size, multichain). Proposals move through pending → active → finished → enacted stages with a committee structure.
+- **Significance:** A mature, production-deployed metaverse governance platform that grapples with real-world issues like Ledger hardware wallet compatibility and transparency reporting.
 
 ---
 
-## Part III — The Controversies: What People Are Debating
+## Part II — How On-Chain Voting Contracts Actually Work
 
-### 3.1 The Plutocracy Problem
+### 2.1 The Moloch DAO: A Minimalist Masterpiece
 
-**The critique:** "One token, one vote" simply replicates wealth hierarchy in a new wrapper. Whales can buy governance tokens, deploy flash-loan attacks to temporarily concentrate voting power, and pass proposals that benefit only them.
+The Moloch DAO (MolochVentures/moloch) is the most thoroughly documented on-chain voting system in existence. Its design philosophy — "the more Solidity we write, the greater the likelihood we lose everyone's money" — led to a radically simple two-contract architecture:
 
-**Evidence:**
-- Audit reports note that **governance capture with borrowed/temporary liquidity** is a known attack vector (ctfbench/ctfbench: "Votes do not reflect long-term stake/ownership").
-- The ENS and Decentraland governance dApps both rely on token-balance strategies where a single large holder can swing a vote.
-- Quadratic voting and conviction voting are proposed mitigations, but neither is widely adopted yet.
+**Moloch.sol** (membership, voting, proposal processing):
+- **Shares:** Non-transferable voting rights minted on membership. Members can *irreversibly* redeem shares for a proportional claim on the Guild Bank's ETH.
+- **Proposal Queue:** Proposals are processed in FIFO order. Each proposal includes: proposer, applicant, shares requested, tribute (ETH offered), starting period, yes/no vote tallies, and a `maxTotalSharesAtYesVote` guard.
+- **Voting Period:** 7 days (configurable). Members vote once via `submitVote`; votes are tallied by share weight.
+- **Grace Period:** 7 days after voting ends. Members who voted **No** (or abstained) can `ragequit` — burning their shares and withdrawing their proportional ETH.
+- **Dilution Bound:** A critical game-theoretic safeguard. If a YES voter's position would be diluted more than 3× by mass ragequits, the proposal fails. This prevents 51% attackers from buying shares, passing a proposal, and stealing treasury funds before others can exit.
+- **Processing Reward:** 0.1 ETH bounty for anyone who calls `processProposal`, incentivizing timely execution.
+- **Delegate Key:** Members can update their voting/acting address, enabling wallet restorations or delegation to governance tools.
+- **Abort Window:** Applicants have 1 day to `abort` a proposal that contains unfavorable terms, recovering their tribute immediately.
 
-### 3.2 The Participation Crisis
+**The Ragequit Mechanism in Detail:**
+The ragequit is Moloch's killer feature. It creates a credible exit threat: if a majority proposes something the minority opposes, the minority can leave with their share of assets, making the proposal economically unviable for the remaining members. This is the on-chain equivalent of "voting with your feet."
 
-**The critique:** DAOs suffer from chronically low voter turnout. Despite tens of thousands of token holders, often fewer than 10% participate in governance votes. This means a small, highly-motivated minority — or even a single whale — can effectively control outcomes.
+**GuildBank.sol** (treasury management):
+A simple contract that holds ETH and allows proportional withdrawals based on share ownership. The only function is `withdraw(receiver, shares, totalShares)`, called exclusively by Moloch.sol during ragequits.
 
-**Evidence:**
-- Decentraland's governance issues reveal **technical barriers**: users with Ledger hardware wallets are unable to cast votes ([#1919](https://github.com/decentraland/governance/issues/1919)), and RPC providers impose block-range limits that break log-indexing ([#1953](https://github.com/decentraland/governance/issues/1953)).
-- DAO DAO's open issues are sparse (the project is well-audited and stable), which may itself indicate that governance participation is functioning smoothly — or that the community is small and insular.
+### 2.2 The DAO DAO Modular Architecture
 
-### 3.3 The Security Dilemma
+DAO DAO's approach addresses Moloch's rigidity through composability:
 
-**The critique:** On-chain governance is transparent — but that transparency cuts both ways. Every proposal, vote, and treasury movement is publicly visible, making DAOs targets for surveillance, coercion, and governance manipulation.
+| Module Type | Options | Purpose |
+|-------------|---------|--------|
+| Voting Power | CW20-staked, CW721-staked, CW4-membership | Determines who can vote and how much weight they have |
+| Proposals | Single (yes/no), Multiple, Condorcet (ranked) | Defines the decision-making format |
+| Core | — | Holds the DAO treasury |
 
-**Evidence:**
-- Ring-signature-based voting (BlockVotes) and commit-reveal schemes are direct responses to this problem, but add complexity and reduce auditability.
-- The Decentraland governance team **offered a free security review** ([#1932](https://github.com/decentraland/governance/issues/1932)), suggesting that even well-funded projects worry about undiscovered vulnerabilities.
-- DAO DAO has been audited multiple times by Oak Security — but audits find bugs, not design flaws.
+Each module implements a standard interface, so a DAO can swap its voting module without touching its proposal module. This is the "governance lego" thesis: governance systems should be composable, upgradable, and forkable.
 
-### 3.4 The "Code is Law" vs. Human Judgment Debate
+### 2.3 Snapshot Strategies (used by Decentraland, ENS, others)
 
-**The critique:** On-chain governance removes human discretion from decision-making. A proposal that passes by a razor-thin margin may require nuance, context, and ethical judgment that a smart contract cannot provide. Yet on-chain execution is automatic and irreversible.
+Snapshot uses off-chain signed votes (gasless) with on-chain verification. Key strategies include:
+- **erc20-balance-of:** One vote per token held
+- **delegation:** Allows token holders to delegate voting power
+- **erc721-with-multiplier:** NFT holders get weighted votes (e.g., LAND tokens × 2000)
+- **decentraland-estate-size:** Estate owners get votes proportional to estate size
+- **multichain:** Combines strategies across Ethereum and Polygon
 
-**Evidence:**
-- Decentraland's governance model includes a **committee** that can pass/reject and enact/reject proposals after the vote — a deliberate human-check layer on top of automated results.
-- ENS governance uses a multi-sig treasury controlled by elected committee members, blending on-chain voting with off-chain human oversight.
-- HybridVoting explicitly separates "voting within a class" from "blending outcomes across classes" — acknowledging that pure algorithmic aggregation may not produce just results.
+### 2.4 Common Architectural Patterns
 
-### 3.5 The Legitimacy Question
-
-**The critique:** If a DAO governs a real treasury, real assets, or real people, who grants it legitimacy? A DAO's authority is derived solely from its smart contracts and token distribution — neither of which has democratic mandate in any traditional sense.
-
-**Evidence:**
-- The Cardano Foundation's Jormungandr project takes a different approach: it's a **blockchain node** for privacy voting, not a governance platform — suggesting that even veteran blockchain organizations are hesitant to build governance directly on-chain.
-- The entire HybridVoting philosophy is built on the premise that current systems are illegitimate because they force a "false choice" between democracy and plutocracy — implying that existing DAOs have neither.
+1. **Proposal lifecycle:** Submission → Voting period → Grace period → Processing/Execution
+2. **Quorum mechanics:** Many systems require a minimum participation threshold (Moloch deliberately omits this)
+3. **Timelocks:** Some DAOs add a delay between vote passage and execution, allowing challenge periods
+4. **Multi-sig execution:** Finished proposals are often enacted by a multi-signature committee (as in Decentraland)
+5. **Off-chain voting with on-chain execution:** Snapshot-style systems save gas but introduce a trust assumption in the signing/verification layer
 
 ---
 
-## Part IV — Synthesis & Open Questions
+## Part III — Central Controversies & Open Debates
 
-1. **Can on-chain voting ever achieve true ballot secrecy?** Commit-reveal and ZK-proofs offer paths, but each trades away some degree of transparency or verifiability.
+### 3.1 Plutocracy: Does Token-Weighted Voting Perpetuate Inequality?
 
-2. **Is quadratic/conviction voting the right antidote to plutocracy?** These mechanisms are theoretically sound but practically unproven at scale. Who designs the parameters — and who audits those designers?
+The most fundamental critique: if voting power = token holdings, then the wealthy control outcomes. This is not theoretical — DAO DAO's own governance forum and ENS's governance discussions are filled with proposals to introduce reputation-based voting, quadratic voting, or conviction voting to dilute whale influence.
 
-3. **Should DAOs have a human override layer?** Decentraland's committee and ENS's multi-sig suggest that pure algorithmic governance is insufficient — but where do you draw the line between "human oversight" and "centralized betrayal"?
+**Key tension:** Token-weighted voting aligns incentives (those with skin in the game should have influence) but creates political power concentration. Quadratic voting (where each additional vote costs more) is proposed as a remedy but introduces complexity that may reduce accessibility.
 
-4. **Does multi-constituency governance actually work?** HybridVoting's class-based model is elegant on paper. But how do you define "worker," "user," and "community member"? Who decides the allocation percentages?
+### 3.2 Voter Apathy and Participation Rates
 
-5. **Is the participation crisis a technical problem or a political one?** Low turnout may reflect apathy, but it may also reflect a rational assessment that one's vote won't matter — or that the system is designed to be opaque.
+Even in well-governed DAOs, proposal participation rates are often below 10%. Decentraland's governance dashboards regularly show single-digit voter turnout. This raises a question: is on-chain governance giving us more democratic participation, or just more efficient plutocracy?
+
+**The delegation paradox:** Delegation mechanisms (where voters delegate to experts) can increase effective participation but also create implicit power centers — delegates become de facto legislators, raising legitimacy concerns.
+
+### 3.3 Security Vulnerabilities in Voting Contracts
+
+- **The Moloch `approve()` trap:** Auditors discovered that calling `approve()` on the Moloch contract is unsafe — any member could submit a proposal that `transferFrom`s more tokens than the applicant intended. The fix (an `abort` mechanism) was added after the fact.
+- **DAO DAO's audit history:** Multiple audits by Oak Security have surfaced issues, reflecting the complexity of composable contracts.
+- **Snapshot strategy manipulation:** In Decentraland, a bug in the `eth_getLogs` block-range (Issue #1953) demonstrated how even well-tested governance systems can have edge-case failures.
+
+### 3.4 Accessibility and Hardware Wallet Exclusion
+
+Decentraland's Issue #1919 — "Ledger users unable to cast a vote" — reveals a practical barrier: if voting requires specific transaction formats or gas patterns, hardware wallet users may be unable to participate. This is a JavaScript accessibility issue, not a smart contract one, but it undermines the claim of permissionless governance.
+
+### 3.5 Transparency vs. Privacy
+
+- **On-chain transparency:** All votes are public on the blockchain. This enables auditability but also creates a coercion risk — voters can be identified and pressured.
+- **Privacy solutions:** BlockVotes uses ring signatures; Jormungandr targets private voting. But privacy in governance creates its own problems: how do you verify that votes were counted correctly without revealing individual choices?
+- **The transparency paradox:** Decentraland's Issue #1916 (Transparency Issue) and #1911 (Overall check of Transparency reports) show that even organizations committed to transparency struggle with what to disclose and how.
+
+### 3.6 The Ragequit Dilemma
+
+Moloch's ragequit mechanism is brilliant in theory but creates a governance paradox: if everyone who disagrees can exit, the remaining voter base becomes increasingly homogeneous and extreme. The dilution bound (max 3×) is a safety valve, but it doesn't address the **selection effect** — moderate members leave, leaving only the committed faction.
+
+### 3.7 Upgradeability vs. Immutability
+
+DAO DAO emphasizes upgradable contracts. But upgradeability introduces a trust assumption: who controls the upgrade keys? If a multi-sig can upgrade the contracts, it's not truly decentralized — it's a corporation with a more complex governance layer.
+
+### 3.8 The Off-Chain / On-Chain Gap
+
+Snapshot-style off-chain voting saves gas but introduces a verification gap. Votes are signed off-chain and recorded on-chain, but what happens if the Snapshot server is compromised, goes offline, or changes its verification logic? The trust assumption shifts from "the blockchain is honest" to "the off-chain infrastructure is honest."
+
+---
+
+## Part IV — Synthesis & Questions for the Future
+
+1. **Can we design voting mechanisms that are both private and verifiable?** Zero-knowledge proofs offer a path (e.g., MACI by Vitalik Buterin), but they add computational overhead and complexity.
+
+2. **Is token-weighted voting the right foundation, or should we build identity-based systems?** Proof-of-personhood (e.g., Worldcoin, BrightID) attempts this but raises privacy concerns of its own.
+
+3. **How do we handle the tension between efficiency and legitimacy?** On-chain governance can be fast and executable, but low participation undermines legitimacy. Off-chain governance (like Compound's governance) can be more participatory, but execution requires trusted bridges.
+
+4. **What role should exit mechanisms play?** Moloch's ragequit is unique. Should exit be a governance tool in democratic systems generally, or does it undermine the social contract?
+
+5. **Can DAOs scale beyond their current niche?** The projects examined here serve a few thousand to a few hundred thousand users. National-scale digital democracy requires orders of magnitude more throughput, accessibility, and resilience.
 
 ---
 
 ## References & Further Reading
 
-- **BlockChainVoting** — [github.com/mehtaAnsh/BlockChainVoting](https://github.com/mehtaAnsh/BlockChainVoting)
-- **BlockVotes (Ring Signature E-Voting)** — [github.com/yfgeek/BlockVotes](https://github.com/yfgeek/BlockVotes)
-- **DAO DAO (Modular DAO Contracts)** — [github.com/DA0-DA0/dao-contracts](https://github.com/DA0-DA0/dao-contracts)
-- **Decentraland Governance** — [github.com/decentraland/governance](https://github.com/decentraland/governance)
-- **ENS Governance Contracts** — [github.com/ensdomains/governance-contracts](https://github.com/ensdomains/governance-contracts)
-- **HybridVoting Spec (POA/POP)** — [docs/HYBRID_VOTING.md](https://github.com/poa-box/POP/blob/main/docs/HYBRID_VOTING.md)
-- **Audit Report: Governance Capture via Temporary Liquidity** — [ctfbench/ctfbench](https://github.com/ctfbench/ctfbench/blob/main/benchmark_data/reports/no_errors/gpt_5_2_run2/Voting.md)
-- **Decentraland Governance Issue #1919 (Ledger Voting Bug)** — [github.com/decentraland/governance/issues/1919](https://github.com/decentraland/governance/issues/1919)
-- **Decentraland Governance Issue #1932 (Security Review Offer)** — [github.com/decentraland/governance/issues/1932](https://github.com/decentraland/governance/issues/1932)
+- Moloch DAO Whitepaper: https://github.com/MolochVentures/Whitepaper/blob/master/Whitepaper.pdf
+- "Meditations on Moloch" (Slate Star Codex): http://slatestarcodex.com/2014/07/30/meditations-on-moloch/
+- DAO DAO Design Wiki: https://github.com/DA0-DA0/dao-contracts/wiki/DAO-DAO-Contracts-Design
+- Democracy Earth Open Source Governance: https://github.com/DemocracyEarth/community
+- Snapshot Governance Documentation: https://docs.snapshot.org
+- moloch-v1-contracts README (full contract documentation): `v1_contracts/README.md` in MolochVentures/moloch
+- DAO DAO Audits by Oak Security: https://www.oaksecurity.io/
+- Decentraland Governance dApp: https://governance.decentraland.org
+- ENS Governance Forum: https://discuss.ens.domains/
 
 ---
 
-*This outline was compiled from live GitHub data: repository metadata, on-chain voting contract code, and open governance issues. It is a starting point — the essay itself will flesh out these arguments with deeper analysis and original perspective.*
+*This outline was compiled from GitHub repository analysis, on-chain contract code review, and open issue tracking across the blockchain voting and DAO governance ecosystem.*
