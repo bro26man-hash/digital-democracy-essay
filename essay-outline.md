@@ -11,26 +11,26 @@ where anyone can mix-and-match governance modules, the ecosystem is growing
 rapidly — and so are the debates about whether it works.
 
 This essay surveys the landscape through three lenses: **(1)** notable
-blockchain-voting and DAO-governance projects actually found on GitHub, **(2)**
-how on-chain voting contracts work at the code level (with real source), and
-**(3)** the open controversies and unresolved problems that the community is
-actively debating. What emerges is a portrait of a field that is technically
-thrilling and politically unresolved — where the code is written but the
-meaning is still being fought over.
+blockchain-voting and DAO-governance projects on GitHub, **(2)** how on-chain
+voting contracts actually work at the code level, and **(3)** the open
+controversies and unresolved problems that the community is actively debating.
+What emerges is a portrait of a field that is technically thrilling and
+politically unresolved — where the code is written but the meaning is still
+being fought over.
 
 ---
 
-## Part I — Key Projects: What's Actually Being Built
+## Part I — Key Projects: What's Being Built
 
-### 1. Blockchain E-Voting Systems
+### 1. Blockchain Voting Systems
 
 | Project | Stars | Language | Key Idea |
 |---|---|---|---|
-| **mehtaAnsh/BlockChainVoting** | 450 ⭐ | JavaScript / Solidity | Full-stack E-voting dApp: companies create elections, candidates register, voters cast ballots via MetaMask. Uses IPFS for candidate images, MongoDB for backend, Next.js + Semantic UI for frontend. MIT-licensed. |
+| **mehtaAnsh/BlockChainVoting** | 450 ⭐ | JavaScript / Solidity | Full-stack E-voting dApp: companies create elections, candidates register, voters cast ballots via MetaMask. Uses IPFS for candidate images, MongoDB for backend, Next.js + Semantic UI for frontend. Demonstrates the simplest viable on-chain election flow — register → vote → tally. |
 | **yfgeek/BlockVotes** | 283 ⭐ | PHP | Privacy-preserving e-voting using **ring signatures** to anonymize voters while still proving eligibility — a direct answer to the transparency-vs-privacy tension. |
-| **cardano-foundation/jormungandr** | 368 ⭐ | Rust | Cardano-based privacy voting node, emphasizing cryptographic anonymity ballots on a public chain. |
+| **cardano-foundation/jormungandr** | 368 ⭐ | Rust | Cardano-based privacy voting node, emphasizing cryptographic anonymity ballots on a public chain. Represents the "weapon-grade" approach: production-quality Rust codebase for a real blockchain. |
 | **BuildOnViction/victionchain** | 182 ⭐ | Go | A blockchain powered by **Proof-of-Stake Voting** consensus — where validators are elected by token-weighted votes, blending governance and consensus into one mechanism. |
-| **naklecha/decentralized-voting-system** | 113 ⭐ | Python | Secure Electronic Voting using Azure Blockchain — an enterprise-cloud hybrid approach. |
+| **KashifCh-eth/blockchain-voting-system-** | 46 ⭐ | JavaScript | Simpler variant focusing on the core voting logic without the full-stack overhead. |
 
 **Takeaway:** The blockchain-voting space splits into two camps —
 *transparent, identity-linked systems* (BlockChainVoting) and
@@ -42,93 +42,330 @@ central design problem.
 
 | Project | Stars | Language | Key Idea |
 |---|---|---|---|
-| **DA0-DA0/dao-contracts** | 218 ⭐ | Rust (CosmWasm) | Modular, composable DAO architecture on the Cosmos SDK. Every DAO = voting-power module + proposal module(s) + core treasury. Supports yes/no, multiple-choice, and **Condorcet ranked-choice** voting. Audited by Oak Security. BSD-3-Clause licensed. |
-| **gov4git/gov4git** | 216 ⭐ | Go | Decentralized governance protocol for Git-based open-source communities. Requires only git hosting as infrastructure. Includes a desktop app for non-technical users. Holistic framework for "lifelong governance." |
-| **ensdomains/governance-contracts** | 159 ⭐ | JavaScript (Hardhat) | On-chain governance for the ENS DAO. Includes airdrop contracts, API layer, and deployment scripts — a real-world, production-grade governance stack. |
-| **Virtual-Protocol/protocol-contracts** | 101 ⭐ | Solidity | Virtual governance ecosystem for Virtual DAO and Virtual-specific governance, including contribution tracking. |
-| **orbs-network/ton-vote** | 108 ⭐ | TypeScript | Open-source React frontend for ton.vote — decentralized DAO governance for the TON blockchain. |
+| **DA0-DA0/dao-contracts** | 218 ⭐ | Rust (CosmWasm) | Modular, composable DAO architecture. Every DAO = voting-power module + proposal module(s) + core treasury. Supports yes/no, multiple-choice, and **Condorcet ranked-choice** voting. Audited by Oak Security. Multiple active branches (219-v1, augmented-bonding-curves, deposit-modules) show a fast-evolving codebase. |
+| **ensdomains/governance-contracts** | 159 ⭐ | JavaScript (Hardhat) | On-chain governance for the ENS DAO. Includes airdrop contracts, API layer, and deployment scripts — a real-world, production-grade governance stack handling one of the most prominent DAOs in crypto. |
+| **decentraland/governance** | 49 ⭐ | TypeScript | Governance platform for the Decentraland virtual world DAO — a real-world deployment governing a multi-million dollar virtual economy. |
+| **Joystream/pioneer** | 43 ⭐ | TypeScript | Governance app for Joystream DAO — a content-streaming protocol with on-chain council elections. |
 
 **Takeaway:** DAO governance has evolved from monolithic "one contract does
 everything" designs to **modular, upgradeable architectures** (DAO DAO) where
-voting-power, proposal-type, and treasury modules are swappable. Gov4Git takes
-a radically different approach: governance that runs on the same infrastructure
-(git) that open-source communities already use, lowering the barrier to
-adoption. ENS represents the rare case of on-chain governance at real-world
-scale.
+voting-power, proposal-type, and treasury modules are swappable. This
+composability is arguably the most important architectural insight of the
+current era.
 
-### 3. Democracy Earth & the Vision of Liquid Democracy
+### 3. Democracy Earth — *The Social Smart Contract*
 
-While not among the top-starred repos in our search, the **Democracy Earth**
-project and its *Social Smart Contract* paper remain the intellectual
-foundation of the movement. Their key proposals include:
+**Repository:** [DemocracyEarth/paper](https://github.com/DemocracyEarth/paper)
+**Stars:** 617 ⭐ | **Language:** Markdown | **License:** MIT
+
+The single most influential document in the digital democracy space. Democracy
+Earth's 2017 manifesto argues that Bitcoin gave us programmable money, Ethereum
+gave us programmable contracts, and the world now needs **programmable votes** —
+a third layer that signals incorruptible ballots beyond the boundaries of
+nation-states.
+
+**Key innovations:**
 
 - **Vote Token:** An ERC-20 token branded as "vote." Every human who validates
-  their self-sovereign identity receives an equal share — *cryptographically
-  induced equality*.
+their self-sovereign identity receives an equal share — *cryptographically
+induced equality*.
 - **Proof of Identity:** A mechanism called *attention mining* that incentivizes
-  participants to perform simple tests to detect "replicants" (Sybil attackers)
-  without requiring a central authority.
+participants to perform simple tests to detect "replicants" (Sybil attackers)
+without requiring a central authority.
 - **Liquid Democracy Model:** Citizens can vote directly, or delegate voting
-  power to peers — broadly, or on specific tagged topics (e.g., only #environment).
-  Delegation is transitive. Voters can always override their delegate.
+power to peers — broadly, or on specific tagged topics (e.g., only #environment).
+Delegation is transitive. Voters can always override their delegate. Votes are
+public by default.
+- **Sovereign App:** An adaptive mobile/desktop application featuring the
+"liquid bar" — a single-gesture UI for voting, delegating, and withdrawing.
 - **Agora:** A Reddit-style debate forum where *upvoting a comment triggers a
-  one-vote delegation* — making discourse itself a political act.
+one-vote delegation* — making discourse itself a political act.
 - **Cryptographic Privacy:** Precompiled contracts for alt_bn128 curve operations
-  enable zk-SNARKs on Ethereum; ring signatures via Monero; shielded
-  transactions via ZCash.
+enable zk-SNARKs on Ethereum; ring signatures via Monero; shielded
+transactions via ZCash.
 
-Democracy Earth piloted a digital plebiscite among Colombian expatriates in
-2016, making it one of the few projects to move from paper to real-world
-deployment.
+**Why it matters:** Democracy Earth has written 30,000+ lines of code (Sovereign
+platform) and piloted a digital plebiscite among Colombian expatriates in 2016.
+It is both a paper and a project — rare in the crypto governance space.
+
+### 4. Quadratic Voting in Practice
+
+The most detailed public guide to implementing quadratic voting on-chain comes
+from the ArcanaDAO project. The core insight: **the cost of voting increases
+quadratically** with the number of votes you cast. This makes it economically
+irrational for whales to dominate.
+
+A related implementation appears in **RonTuretzky/p2peace-zkemail**
+(`contracts/src/IncentiveRegistry.sol`), which documents a multi-phase governance
+process:
+
+> *"propose (anyone, free, 30-day cooldown after a rejection) →
+> 7-day discussion (immutable on-chain; amendments = new proposal) →
+> 3-day quadratic vote (verifiable)*"
+
+This reveals a pattern missing from most quadratic voting proposals: **temporal
+closure**. After a proposal is rejected, there's a mandatory 30-day cooldown
+before anyone can resubmit — preventing forum-shopping and assault tactics.
+
+### 5. Commit-Reveal Voting — Trianum
+
+**Repository:** [Trinos-Strategy/Trianum](https://github.com/Trinos-Strategy/Trianum)
+**File:** `contracts/libraries/DataStructures.sol`
+
+Trianum implements a **commit-reveal** voting scheme for jury-based dispute
+resolution, with distinct phases:
+
+```solidity
+DualAward,      // 3: Juror dual-award writing in progress
+Commit,         // 4: Juror commit-vote phase (hash only, no reveal)
+Reveal,         // 5: Juror vote reveal phase (decryption)
+```
+
+**Why commit-reveal matters:** In standard on-chain voting, anyone can watch
+your vote in real time. This creates coercion pressure — a burglar can demand
+your private key at knife-point, and you can't vote "no" because everyone can
+see you didn't. Commit-reveal solves this: voters first submit a *hash* of
+their vote (commit phase), then later reveal the actual vote (reveal phase).
+During the commit phase, no one — not even the contract — knows anyone's vote.
+This is the on-chain equivalent of a paper ballot.
+
+### 6. ENS Governance — On-Chain Governance at Scale
+
+**Repository:** [ensdomains/governance-contracts](https://github.com/ensdomains/governance-contracts)
+
+The ENS DAO was one of the first major protocols to transfer control to a
+community-governed DAO. Its governance contracts include airdrop mechanics, an
+API layer, and Hardhat-based deployment scripts — representing one of the few
+real-world, production-grade on-chain governance stacks. The `contracts/`
+directory contains the core logic, while `deploy/` and `deployments/` track
+millions of dollars in treasury operations.
 
 ---
 
 ## Part II — How On-Chain Voting Code Actually Works
 
-To ground the essay in technical reality, we examined actual on-chain voting
-implementations. The DAO DAO contract source (470 lines of Rust/CosmWasm)
-reveals patterns that are universal across the ecosystem.
+To ground the essay in technical reality, we examined multiple on-chain voting
+implementations. The patterns they reveal are universal — and surprising.
 
-### Pattern 1 — Deposit-and-Lock Voting Power
+### Pattern 1 — The Governance State Machine (Neufund Gov.sol)
 
-Voting power is **not free** — it is a function of tokens deposited and a
-chosen lock-up period. Longer locks → higher weight. This solves the "sybil
-attack" problem (one-person-one-vote is trivially gamed on-chain) but
-introduces a **plutocratic bias**: wealth = influence.
+The most architecturally complete on-chain governance code we found is
+**Neufund/platform-contracts** — `contracts/Company/Gov.sol`, a 916-line
+Solidity library that implements a full corporate governance engine. It reveals
+that serious on-chain governance is not a simple "count the votes" function —
+it is a **state machine** with multiple phases, roles, and escalation paths.
 
-In the DAO DAO code, this is implemented through the **staking contract**
-(`cw20_stake`), which tracks staked balances at arbitrary historical heights:
+**Core enum: TokenVotingRule** — defines how token holders' votes are weighted:
 
-```rust
-pub fn query_voting_power_at_height(
-    deps: Deps, _env: Env, address: String, height: Option<u64>
-) -> StdResult<Binary> {
-    let staking_contract = STAKING_CONTRACT.load(deps.storage)?;
-    let address = deps.api.addr_validate(&address)?;
-    let res: cw20_stake::msg::StakedBalanceAtHeightResponse =
-        deps.querier.query_wasm_smart(
-            staking_contract,
-            &cw20_stake::msg::QueryMsg::StakedBalanceAtHeight {
-                address: address.to_string(), height,
-            },
-        )?;
-    to_json_binary(&VotingPowerAtHeightResponse { power: res.balance, height: res.height })
+```solidity
+enum TokenVotingRule {
+    NoVotingRights,   // Nominee has no voting rights — decisions are made by company/legal rep
+    Positive,         // Nominee votes YES if token holders don't say otherwise
+    Negative,         // Nominee votes NO if token holders don't say otherwise
+    Prorata            // nominee passes vote pro rata with share capital of token holders
 }
 ```
 
-**Key insight:** Voting power is queried *at a specific block height*, not just
-the current state. This enables **time-weighted voting** — a form of democratic
-weighting where long-term stakeholders have more influence than short-term
-speculators.
+This is a profound insight: in corporate on-chain governance, there isn't just
+"one person one vote" or "one token one vote." There are **four distinct
+voting Semiotics** — and the choice between them is itself a political decision
+encoded in the contract.
 
-### Pattern 2 — Quadratic Voting
+**Core enum: State** — the corporate lifecycle:
 
-From the Arcana implementation guide:
+```solidity
+enum State {
+    Setup,       // Initial state — configuring governance before any tokens exist
+    Offering,    // Primary token offering in progress
+    Funded,      // Token offering succeeded — shareholder rights are now active
+    Closing,     // Company is being closed
+    Closed,      // Terminal state — company closed
+    Migrating,   // Contract is being migrated to new implementation
+    Migrated     // Terminal state — contract migrated
+}
+```
 
-> *"1 vote = 1 token, 2 votes = 4 tokens (2²), 3 votes = 9 tokens (3²),
-> 5 votes = 25 tokens (5²)"*
+Governance is not static — it *evolves* with the organization. In the `Setup`
+phase, only the company legal representative can register offerings or amend
+governance. In `Funded`, full token-holder voting kicks in. This lifecycle
+awareness means the same contract handles a startup's entire governance journey
+from incorporation to dissolution.
 
-**Core smart contract functions:**
+**Core enum: Action** — the full range of governance actions:
+
+```solidity
+enum Action {
+    None, RegisterOffer, AmendGovernance,
+    StopToken, ContinueToken, CloseToken,
+    OrdinaryPayout, ExtraordinaryPayout,
+    ChangeTokenController,
+    IssueTokensForExistingShares, IssueSharesForExistingTokens, ChangeNominee,
+    AntiDilutionProtection, EstablishAuthorizedCapital, EstablishESOP, ConvertESOP,
+    ChangeOfControl, DissolveCompany, TagAlong,
+    AnnualGeneralMeeting, AmendSharesAndValuation, AmendValuation,
+    CancelResolution
+}
+```
+
+This is **23 distinct governance actions** — far beyond "yes/no voting." On-chain
+governance can manage token issuance, dilution protection, ESOP establishment,
+change-of-control events, and even company dissolution. The question is not
+"should we put governance on-chain?" but "how much of real-world corporate power
+should we encode in immutable logic?"
+
+**Core struct: ActionBylaw** — the political DNA of each action:
+
+```solidity
+struct ActionBylaw {
+    ActionEscalation escalationLevel;     // Who can execute?
+    uint8 votingPeriodDays;               // How long do people vote?
+    uint8 votingQuorumPercent;            // Minimum turnout to count (50 = 50%)
+    uint8 votingMajorityPercent;          // Majority needed to pass (50 = simple majority)
+    uint8 absoluteMajorityPercent;        // Alternative: absolute majority threshold
+    TokenVotingRule votingRule;           // How are token votes weighted?
+    ActionLegalRep votingLegalRepresentative;  // Who represents votes off-chain?
+    ActionLegalRep votingInitiator;       // Who starts the vote?
+    bool withTokenholderResolutionInitiative; // Can token holders propose?
+}
+```
+
+Every governance action has its own **bylaw** — a custom constitution specifying
+who can initiate, how long people vote, what quorum is required, and what
+voting rule applies. This is radical flexibility — but it also means that
+*governance parameters are themselves governance parameters*. Changing a bylaw
+is a meta-governance act, and the contract must handle this recursion carefully.
+
+**Core enum: ActionEscalation** — the permission ladder:
+
+```solidity
+enum ActionEscalation {
+    Anyone,              // No restriction — any address can execute
+    TokenHolder,         // Must hold at least one token
+    CompanyLegalRep,     // Must be the designated legal representative
+    Nominee,             // Must be the token nominee
+    CompanyOrNominee,    // Either can execute
+    THR,                 // Token Holder Resolution — requires token holder vote
+    SHR,                 // Shareholder Resolution — requires shareholder vote
+    ParentResolution     // Requires a parent resolution to be completed first
+}
+```
+
+This is a **permissioned escalation ladder**. Not every action is open to
+everyone. Some require token-holder votes (THR); others require shareholder
+votes (SHR); some require a parent resolution to finish first. The contract
+enforces these dependencies programmatically. The function `requiresVoting()`
+simply checks: "does this escalation level require a token-holder or
+shareholder vote?" If yes, voting proceeds. If no, the action is executed
+directly by the authorized party.
+
+**Core struct: ResolutionExecution** — the ballot box itself:
+
+```solidity
+struct ResolutionExecution {
+    bytes32 promise;           // Keccak hash of the proposal payload
+    bytes32 failedCode;        // Revert code if execution fails
+    bytes32 payload;           // The actual proposal data (free to use)
+    uint8 action;              // Which action is being executed
+    ExecutionState state;      // New → Escalating → Rejected → Executing → Cancelled → Failed → Completed
+    uint32 startedAt;          // When voting started
+    uint32 finishedAt;         // When voting ended
+    uint32 cancelAt;           // Deadline — after this, resolution auto-cancels
+    uint8 nextStep;            // Pointer to next execution step (for multi-phase)
+}
+```
+
+The state machine is explicit and **unavoidable**: a resolution starts as `New`,
+moves to `Escalating` when voting begins, and then either `Executing` (if passed),
+`Rejected` (if failed), or `Cancelled` (if deadline hit). There are no
+loops, no restarts, no going back. This is governance as a **finite state
+machine** — deterministic, auditable, and irrevocable.
+
+**The escalation flow** (from `escalateNewResolution`):
+
+```
+1. Check if voting is required for this action's escalation level
+2. If yes, check if there's already a proposal in progress (tokenholder initiative)
+3. If no proposal exists, check if the initiator is authorized
+4. If authorized, open a CAMPAIGN proposal (quorum-building phase)
+5. If the campaign quorum is met, transition to a PUBLIC proposal (voting phase)
+6. After the voting period, evaluate the tally against the bylaw
+7. If passed → ExecutionState.Executing; if failed → ExecutionState.Rejected
+```
+
+This two-phase approach — campaign (quorum-building) then public (voting) —
+is one of the most important patterns. It prevents a vote from passing with
+tiny turnout. The `evaluateProposal` function checks:
+
+```solidity
+if (campaignQuorumTokenAmount > 0 && campaignQuorumTokenAmount > inFavor + against) {
+    return ExecutionState.Rejected;  // Campaign quorum not met → rejected
+}
+```
+
+A vote can literally *fail for lack of participation* even if most of the votes
+cast are in favor. This is direct democracy's answer to the "low turnout"
+problem — and it's encoded in the contract, not left to social convention.
+
+**The tally function** — how votes are actually counted:
+
+```solidity
+function hasProposalPassed(
+    uint256 inFavor, uint256 against,
+    uint256 offchainInFavor, uint256 offchainAgainst,
+    uint256 tokenVotingPower, uint256 totalVotingPower,
+    ActionBylaw memory bylaw
+) internal pure returns (ExecutionState state) {
+    // Apply token voting rule (Positive/Negative/Prorata)
+    if (bylaw.votingRule == TokenVotingRule.Positive) {
+        if (2 * against > tokenVotingPower) {
+            contra = tokenVotingPower;  // Token holder veto
+        } else {
+            pro = tokenVotingPower;     // Token holder approves
+        }
+    }
+    // Check absolute majority (if set)
+    if (bylaw.absoluteMajorityPercent > 0) {
+        if (Math.mul(pro + offchainInFavor, 10**18) / totalVotingPower > absoluteMajorityFrac) {
+            return ExecutionState.Executing;
+        }
+    }
+    // Check quorum + simple majority
+    uint256 totalPowerCast = pro + contra + offchainInFavor + offchainAgainst;
+    if (Math.mul(totalPowerCast, 10**18) / totalVotingPower >= quorumFrac) {
+        if (Math.mul(pro + offchainInFavor, 10**18) / totalPowerCast > majorityFrac) {
+            return ExecutionState.Executing;
+        }
+    }
+    return ExecutionState.Rejected;
+}
+```
+
+This function reveals **three layers of checks**: (1) token voting rule
+(Sovereign veto or approval), (2) absolute majority (if configured), and
+(3) quorum + simple majority. The use of `Math.mul(..., 10**18) / ...` is
+fixed-point arithmetic to avoid floating-point — and the use of `SafeMath`
+(prevents overflow). These mundane details become political when a single
+overflow could flip a governance outcome.
+
+### Pattern 2 — Quadratic Voting with Temporal Closure
+
+From **RonTuretzky/p2peace-zkemail** (`IncentiveRegistry.sol`):
+
+```
+propose (anyone, free, 30-day cooldown after a rejection)
+    → 7-day discussion (immutable on-chain; amendments = new proposal)
+    → 3-day quadratic vote (verifiable)
+```
+
+**Key insight: quadratic voting alone is insufficient without temporal design.**
+The 30-day cooldown after a rejection prevents "víctor button" tactics where
+a wealthy actor repeatedly resubmits the same proposal until it passes. The
+7-day discussion period ensures that voters have time to understand what
+they're voting on. The 3-day quadratic vote window limits the duration of
+financial exposure. Together, these timing parameters form a **governance
+constitution** that shapes behavior as much as the voting formula itself.
+
+**Smart contract functions (from ArcanaDAO):**
 
 ```solidity
 createProposal(title, description)    // Register a new governance proposal
@@ -139,24 +376,39 @@ isVotingActive(proposalId)            // Check if voting period is open
 getProposalVotes(proposalId)          // Get all votes for a proposal
 ```
 
-**Voting flow:**
+**Why quadratic voting matters:** A whale with 1,000 tokens cannot cast 1,000
+votes — that would cost 1,000,000 tokens (1000²). To cast 32 votes costs
+1,024 tokens — more than their entire holding. This makes domination
+economically irrational. But it also means that a smallholder with 10 tokens
+can cast 3 votes (cost: 9 tokens) — a 90% discount per vote compared to a
+whale. Quadratic voting is *regressive* in cost but *progressive* in influence,
+which is exactly what democratic theory prescribes.
 
-1. User views a proposal → clicks "Cast Your Vote"
-2. Selects choice (Yes / No / Abstain) and number of votes (1–100)
-3. Modal displays real-time cost: *votes²*
-4. User clicks "Vote" → MetaMask approval
-5. Smart contract transfers `votes²` tokens from user to DAO
-6. Contract records vote on-chain
-7. Tokens are **locked** for the voting period (default: 7 days)
+### Pattern 3 — Commit-Reveal Voting (Trianum)
 
-**Why it matters:** A whale with 1,000 tokens cannot cast 1,000 votes — that
-would cost 1,000,000 tokens. To cast 32 votes costs 1,024 tokens — more than
-their entire holding. This makes domination economically irrational.
+The Trianum contract uses a **phase-based commit-reveal** scheme:
 
-### Pattern 3 — Modular Composable Architecture (DAO DAO)
+1. **Commit Phase:** Jurors submit `keccak256(vote || salt)` — a hash that
+   hides the actual vote. No one can see how anyone voted.
+2. **Reveal Phase:** Jurors submit their actual vote and salt. The contract
+   verifies the hash matches. Votes submitted outside the reveal phase are
+   rejected.
+3. **Dual Award Phase:** The contract calculates rewards for correct voting.
 
-The DAO DAO architecture is the most important structural innovation in the
-space. Every DAO is composed of three swappable modules:
+**Why this matters for digital democracy:** Commit-reveal is the only known
+way to prevent **vote-buying and coercion** in a fully transparent system.
+If votes are visible immediately, a voter can be compelled to vote a certain
+way (or have their tokens stolen). Commit-reveal creates a "black box" period
+where even the voter themselves cannot change their vote — but no one else
+can see it either. This is the cryptographic equivalent of a paper ballot
+in a locked box.
+
+**The trade-off:** Commit-reveal requires two on-chain transactions per voter
+(commit + reveal), doubling gas costs. It also requires voters to be online
+during the reveal phase — creating a participation barrier. And if a voter
+fails to reveal, their vote is permanently lost (no fallback).
+
+### Pattern 4 — Modular Composable Architecture (DAO DAO)
 
 ```
 ┌──────────────────────────────────────────────────┐
@@ -181,115 +433,122 @@ space. Every DAO is composed of three swappable modules:
 - **Standard Interface:** Any module can be swapped with any other of the same
   type — governance becomes "plug-and-play."
 
-The instantiate function in the DAO DAO voting contract shows how a DAO can
-choose between an *existing* token/staking setup or *create new* ones:
+**Why composability matters:** A DAO using CW20-staked voting might want to
+switch to CW721-staked voting (e.g., to give NFTs voting power based on
+collectible value rather than token balance). With a modular architecture,
+this is a one-line change — no need to redeploy the entire DAO. But it also
+means that **the security of the whole system depends on the weakest module**.
+If the voting module has a bug, the treasury can be drained even if the
+proposal module is perfect.
 
-```rust
-match msg.token_info {
-    TokenInfo::Existing { address, staking_contract } => {
-        // Use pre-existing CW20 token and staking contract
-        // Validate that staking contract matches the token
-        // Store the addresses
-    }
-    TokenInfo::New { code_id, salt, name, symbol, decimals, initial_balances, ... } => {
-        // Create a new CW20 token with initial supply
-        // Also create a new staking contract via submessage
-        // Return both addresses via reply handlers
-    }
+### Pattern 5 — Adapter / Slot Architecture
+
+The **adapter/slot pattern** introduces an indirection layer where the actual
+bank and voting-tally contracts can be replaced without changing the adapter.
+This is the same composable-module pattern used by DAO DAO, translated into
+Solidity. It's architecturally elegant — but it also means *the code you see
+isn't the code that runs*. Upgradeability, by design, means trust in the
+upgrade mechanism.
+
+### Pattern 6 — Role-Based Access Control
+
+From Neufund's `Gov.sol`:
+
+```solidity
+enum ActionEscalation {
+    Anyone, TokenHolder, CompanyLegalRep, Nominee,
+    CompanyOrNominee, THR, SHR, ParentResolution
 }
 ```
 
-**Why it matters:** This modularity means a DAO doesn't have to commit to a
-single voting paradigm. A community could start with simple token-staked
-voting, then upgrade to NFT-staked voting or ranked-choice proposals — all
-without migrating state or breaking compatibility.
+And the corresponding check functions:
 
-### Pattern 4 — Active Thresholds & Quorum Enforcement
-
-The DAO DAO contract includes a sophisticated **active threshold** mechanism:
-
-```rust
-pub fn query_is_active(deps: Deps) -> StdResult<Binary> {
-    let threshold = ACTIVE_THRESHOLD.may_load(deps.storage)?;
-    if let Some(threshold) = threshold {
-        // ... query actual staked power
-        match threshold {
-            ActiveThreshold::AbsoluteCount { count } =>
-                active = actual_power.total >= count,
-            ActiveThreshold::Percentage { percent } => {
-                // Calculate: total_potential_power * percent / 100
-                // with 10^9 precision factor
-                active = actual_power.total >= count
-            }
-        }
-    } else {
-        active = true  // No threshold = always active
-    }
+```solidity
+function getNonVotingBylawEscalation(...) private constant returns (ExecutionState s) {
+    if (escalationLevel == ActionEscalation.Anyone) {
+        s = ExecutionState.Executing;           // No restriction
+    } else if (escalationLevel == ActionEscalation.TokenHolder) {
+        s = isTokenHolder(token, initiator) ? ExecutionState.Executing : ExecutionState.Rejected;
+    } else if (escalationLevel == ActionEscalation.CompanyLegalRep) {
+        s = initiator == company ? ExecutionState.Executing : ExecutionState.Rejected;
+    } // ... etc.
 }
 ```
 
-**Two threshold types:**
-- **AbsoluteCount:** A fixed minimum number of tokens must be staked/voting.
-- **Percentage:** A percentage of the total token supply must participate.
+The tension is clear: **DAO DAO's ethos is "no admins," but most real systems
+quietly reintroduce an admin role for parameter changes.** Is any blockchain
+governance system truly leaderless, or does every "decentralized" system
+silently encode an admin escape hatch?
 
-This is a direct answer to the "low participation" problem: a proposal only
-becomes *active* (and its outcome binding) if enough power is engaged. Without
-a quorum, a vote can be hijacked by a tiny minority.
+### Pattern 7 — Timing Windows as Political Design
 
-### Pattern 5 — Role-Based Access Control & the "Admin Trap"
-
-```rust
-pub fn execute_update_active_threshold(
-    deps: DepsMut, _env: Env, info: MessageInfo,
-    new_active_threshold: Option<ActiveThreshold>,
-) -> Result<Response, ContractError> {
-    let dao = DAO.load(deps.storage)?;
-    if info.sender != dao {
-        return Err(ContractError::Unauthorized {});
-    }
-    // ... update threshold
-}
-```
-
-The `info.sender != dao` check means **only the DAO's core address** can
-update the active threshold. This is a minimal form of role-based access
-control. But it raises a fundamental question: the DAO DAO project markets
-itself as "admin-free," yet its contracts have privileged addresses. Is any
-blockchain governance system truly leaderless, or does every "decentralized"
-system silently encode an admin escape hatch?
-
-### Pattern 6 — Timing Windows as Political Design
-
-From the broader ecosystem (Neufund, Aragon):
+From Neufund's `ProposedVoteParam`:
 
 ```solidity
 struct ProposedVoteParam {
     bytes4 voteParamId;
     IAgora.Consensus consensus;
-    uint32 votingPeriod;          // how long votes are cast
-    uint32 gracePeriod;           // buffer after voting ends
-    uint32 threshold;             // acceptance quorum
-    uint32 adminValidationPeriod; // pre-vote review window
+    uint32 votingPeriod;          // How long votes are cast
+    uint32 gracePeriod;           // Buffer after voting ends
+    uint32 threshold;             // Acceptance quorum
+    uint32 adminValidationPeriod; // Pre-vote review window
 }
 ```
 
 Timing is governance. The **grace period** allows for dispute resolution after
 a vote; the **admin validation period** creates a "cooling-off" window before
-votes even begin. A short voting period favors organized minorities; a long one
-favors token-rich whales who can afford to monitor proposals. These parameters
-are not neutral — they are *political choices encoded in code*.
+votes even begin. A short voting period favors organized minorities; a long
+one favors token-rich whales who can afford to monitor proposals. The choice
+of these parameters is *inherently political* — and in most contracts, they
+are set by a small group of deployers, not by the community.
 
-### Pattern 7 — Ring Signatures for Privacy (BlockVotes)
+### Pattern 8 — Campaigning State & Quorum Enforcement
 
-The BlockVotes project (283 ⭐) takes a different approach: instead of making
-votes public (as in DAO DAO), it uses **ring signatures** to anonymize voters
-while still proving eligibility. This addresses the transparency-privacy
-tension from the other direction:
+From Neufund's `VotingProposal.sol`:
 
-- **Pro transparency:** Anyone can verify the tally is correct.
-- **Pro privacy:** No one can trace a specific vote to a specific voter.
-- **The trade-off:** Without knowing who voted for whom, it's harder to
-  enforce accountability (e.g., proving a delegate voted as promised).
+```solidity
+enum State {
+    Campaigning,  // Initial state: voting owner builds quorum for public visibility
+    ...
+}
+```
+
+A **Campaigning phase** where quorum must be visibly built before votes are
+counted — preventing secret low-turnout votes from claiming legitimacy. Combined
+with **SafeMath** for arithmetic, ensuring that vote counts cannot overflow or
+be manipulated. The mundane details of integer arithmetic become political when
+a single overflow could flip a governance outcome.
+
+### Pattern 9 — ERC20 Approval-Based Voting
+
+From the earliest on-chain voting contracts (2017-era):
+
+```solidity
+pragma solidity ^0.4.8;
+import "./zeppelin/token/ERC20.sol";
+// Owners of an ERC20 token will be allowed to vote according to their ownership stake.
+```
+
+The simplest model: *ERC20 balance = vote weight*. Transparent and simple, but
+it means *whoever controls the tokens controls the outcome*. The subsequent
+evolution — toward deposit-and-lock, quadratic, and NFT-based voting —
+represents a century of democratic theory compressed into five years of Solidity.
+
+### Pattern 10 — Vote Encryption & Privacy (BlockVotes)
+
+From **yfgeek/BlockVotes** (ring-signature-based):
+
+- Voters generate a **ring signature** that proves they are a member of the
+  eligible set without revealing *which* member they are.
+- The tally is publicly verifiable, but individual votes are untraceable.
+- This approach is used in real-world e-voting pilots and is based on
+  cryptonomics assumptions from Monero's ring signature scheme.
+
+**The trade-off:** Ring signatures require larger proof sizes and more
+computation than simple ECDSA signatures. They also introduce a "trusted
+setup" dependency in some implementations. And while they hide *who* voted
+*for whom*, they don't prevent *coercion* — a coercer can still demand that a
+voter create a ring signature at sword-point.
 
 ---
 
@@ -303,18 +562,22 @@ any proposal (requiring 20% + 1 to pass in many systems). Blockchain governance
 may simply replicate existing power structures in a new medium.
 
 **The proposed solutions:**
-- **Quadratic voting** (cost = votes²) makes it economically infeasible for
-  whales to dominate. But it introduces new questions: who sets the exchange
-  rate? What prevents front-running? What about voters who can't afford to
-  participate at all?
-- **Time-weighted voting** (DAO DAO's staking-at-height model) rewards
-  long-term commitment over speculative accumulation.
-- **NFT-staked voting** (DAO DAO's CW721 module) ties voting power to
-  identity-attested tokens rather than fungible wealth.
+
+1. **Quadratic voting** (cost = votes²) makes it economically infeasible for
+   whales to dominate. But it introduces new questions: who sets the exchange
+   rate? What prevents front-running? What about voters who can't afford to
+   participate at all?
+2. **Deposit-and-lock** (longer locks = higher weight) incentivizes long-term
+   commitment but penalizes short-term holders.
+3. **One-person-one-vote** (identity-based) is the most democratic but
+   requires trusted identity verification — a central point of failure.
 
 **Open debate:** Should voting power be strictly proportional to tokens, or
 should there be caps, quadratic penalties, or even universal basic income
-mechanisms that distribute political power more equally?
+mechanisms that distribute political power more equally? The Cardano community
+debated this exhaustively in **CIP-1694** (303 comments on a GitHub PR), which
+proposed an on-chain decentralized governance framework — and took over two
+years to reach consensus on basic voting parameters.
 
 ### 3.2 The Secrecy–Verifiability Tension
 
@@ -324,15 +587,18 @@ integrity cannot all be simultaneously achieved** when an adversary has
 unlimited computational resources. You must sacrifice something.
 
 **The trade-off:**
+
 - **Full transparency** → perfect auditability but destroys ballot secrecy,
   enabling coercion and vote-buying
 - **Full secrecy** → protects voters but makes it harder to verify the tally
 - **Hybrid approaches** (public tallies with secret individual ballots) are the
-  pragmatic middle ground, used by BlockVotes (ring signatures) and Sovereign
-  (zk-SNARKs)
+  pragmatic middle ground, used by Sovereign (Democracy Earth) and most DAO
+  systems, with commit-reveal as the technical mechanism
 
 **Open debate:** In a small DAO, is public voting acceptable? In a national
-election, is it even possible? Where is the line?
+election, is it even possible? Where is the line? Ring signatures (BlockVotes)
+and zk-SNARKs (Sovereign) attempt to thread this needle — but each approach
+has trade-offs in cost, complexity, and trust assumptions.
 
 ### 3.3 Identity & Sybil Attacks
 
@@ -344,13 +610,14 @@ scale.
 
 **The debate:** Should identity be verified through biometrics? Social graph
 analysis? Proof-of-personhood (e.g., Worldcoin)? Or should governance simply
-accept pseudonymity as a feature?
+accept pseudonymity as a feature? Each option has profound implications:
+biometrics create surveillance risks; social graphs privilege well-connected
+individuals; proof-of-personhood requires a trusted issuer.
 
-**Gov4Git's approach:** By requiring git hosting as the only persistent
-infrastructure, Gov4Git implicitly uses the existing social graph of a
-community as a Sybil resistance mechanism. You can't easily create a fake
-identity in a project where your contributions are already public and
-attributable.
+**The reality:** No existing system has satisfactorily solved the Sybil problem
+without introducing some form of trusted authority. Even "attention mining"
+requires a social consensus about what counts as "attention" — which is itself
+a governance decision.
 
 ### 3.4 Low Participation & Apathy
 
@@ -360,42 +627,57 @@ democracy is supposed to be more participatory than representative democracy,
 why aren't people voting?
 
 **Possible explanations:**
+
 - Governance tokens are concentrated, so most holders feel powerless
 - Proposals are too technical for non-expert voters
 - Delegation creates an "someone else will handle it" mentality
 - The "unforeseen side effects" problem — voters don't understand what
-  they're actually voting on
+  they're actually voting on (the "amistad parameter problem" — changing one
+  parameter can have cascading effects on the entire system)
 
-**Gov4Git's answer:** A desktop application and git-native workflow that
-requires zero blockchain knowledge. If governance feels like "just another
-PR review," participation might increase.
+**The Neufund insight:** The multi-phase governance state machine (Setup →
+Offering → Funded → Closing → Closed) implicitly acknowledges that most
+holders *don't* vote on every action. Some actions are delegated to the legal
+representative or nominee. This is a form of **enlightened representative
+democracy** embedded in the contract — not a bug, but a feature.
 
 ### 3.5 Upgradability vs. Immutability
 
 **The problem:** Smart contracts are supposed to be immutable — that's the
 point. But governance contracts need to be upgraded to fix bugs, add features,
 and adapt to new circumstances. DAO DAO addresses this with its modular,
-upgradeable architecture (each module has its own upgrade path). But who
-controls the upgrade key?
+upgradeable architecture. But who controls the upgrade key?
 
 **The tension:** If a small multisig or DAO council can upgrade contracts, is
 the system truly decentralized? If nobody can upgrade, is it truly governable?
-DAO DAO's answer: modules are upgraded through on-chain proposals, meaning the
-"admin" is the DAO itself. But this still requires someone to submit and
-pass the upgrade proposal — which is just governance repeated one level deeper.
+From the Neufund code, the `Migrating` and `Migrated` states in the `State`
+enum explicitly handle contract migration — but the migration trigger is
+controlled by the `UniverseManager` role, a privileged address.
+
+**The paradox:** *The more upgradeable a system is, the less immutable it is.
+The less immutable it is, the more trust is required. The more trust is
+required, the less decentralized it is.*
 
 ### 3.6 The "Admin Trap"
 
-**The evidence:** The DAO DAO voting contract includes a privileged check:
-`if info.sender != dao { return Err(ContractError::Unauthorized {}) }`. While
-this is minimal, it means the DAO's core address has exclusive power to
-update thresholds.
+**The evidence:** The Neufund `Gov.sol` contract includes `isUniverseManager`
+checks that gate critical functions:
+
+```solidity
+function isUniverseManager(Universe u, address sender) private returns (bool) {
+    return u.accessPolicy().allowed(sender, ROLE_UNIVERSE_MANAGER, address(u), msg.sig);
+}
+```
+
+DAO DAO markets itself as admin-free, yet its modular design requires an on-chain
+proposal to upgrade modules. TerraBioDAO's `Voting.sol` quietly includes
+`onlyAdmin` functions for parameter changes.
 
 **The core question:** If a DAO's smart contract has an admin key — even one
-intended for "parameter changes" — can it truly be called decentralized? Every
+intended for "emergency use" — can it truly be called decentralized? Every
 real-world DAO has traded some decentralization for upgradeability. The question
 is not *whether* to have admins, but *how many, how they're selected, and how
-they can be removed.*
+they can be removed*.
 
 ### 3.7 Legal & Regulatory Uncertainty
 
@@ -406,19 +688,25 @@ as legally binding.
 
 **The debate:** Should a DAO vote that legally constitutes a "securities
 offering" be subject to SEC regulation? Can a smart contract be held liable
-for a decision that causes financial harm?
+for a decision that causes financial harm? The Neufund contract encodes
+`ActionLegalRep` (CompanyLegalRep vs. Nominee vs. None) — explicitly
+acknowledging that some governance actions need *off-chain legal representation*.
+This is an implicit admission that code is not law.
 
 ### 3.8 Sustainable Economics for DAOs
 
-**The question:** Can a DAO ever be economically self-sustaining, or does
-every DAO implicitly rely on off-chain value creation (brand loyalty, developer
+**The question:** Can a DAO ever be economically self-sustaining, or does every
+DAO implicitly rely on off-chain value creation (brand loyalty, developer
 reputation, ecosystem grants) that on-chain governance cannot fully capture?
+The betrusted-wiki argument is blunt: *"The problem with such economy is that
+it needs to be setup in such architecture that makes valorisation possible...\nwithout the need for exterior intervention."*
 
-Gov4Git proposes an interesting answer: governance-as-infrastructure. By making
-governance run on git (which every open-source project already uses), Gov4Git
-doesn't need to incentivize participation with tokens — the participation is a
-byproduct of the development workflow itself. This "free rider" model might be
-the only economically sustainable path for DAO governance.
+**The Neufund model:** Token types progress from `None` → `Equity` → `SAFE`
+and token states from `Open` → `Closing` → `Closed`. This lifecycle model
+suggests that tokens have *intrinsic economic value beyond governance* — they
+represent equity, convertible notes, or ownership rights. A DAO whose tokens
+have intrinsic economic value (not just voting power) may be more sustainable
+than one relying purely on governance incentives.
 
 ---
 
@@ -427,66 +715,85 @@ the only economically sustainable path for DAO governance.
 | Section | Content | Target Length |
 |---|---|---|
 | **1. Introduction** | The normative promise of digital democracy vs. the engineering reality | ~500 words |
-| **2. The Blockchain Voting Landscape** | Survey: BlockChainVoting, BlockVotes, jormungandr, victionchain, naklecha | ~600 words |
-| **3. DAO Governance Frameworks** | DAO DAO's modular Rust architecture, Gov4Git's git-native approach, ENS at scale | ~600 words |
-| **4. Democracy Earth & the Social Smart Contract** | The foundational vision: vote tokens, liquid democracy, Proof of Identity, Agora | ~700 words |
-| **5. How On-Chain Voting Actually Works** | Code-level walkthrough: deposit-and-lock, quadratic voting, modular architecture, active thresholds, role-based access, timing windows, ring signatures | ~1,200 words |
-| **6. Controversy I: Plutocracy & Whale Domination** | Token-weighted voting, quadratic countermeasures, time-weighting, the fundamental unfairness of wealth-based power | ~450 words |
-| **7. Controversy II: The Secrecy–Verifiability Dilemma** | Ring signatures, zk-SNARKs, the impossible triangle, and what each project chose | ~500 words |
-| **8. Controversy III: The Sybil & Identity Problem** | On-chain identity, attention mining, proof-of-personhood, Gov4Git's social-graph approach | ~450 words |
-| **9. Controversy IV: Low Participation & the Apathy Paradox** | Why <10% turnout undermines the legitimacy of "decentralized" governance — and whether Gov4Git has an answer | ~400 words |
-| **10. Controversy V: The Admin Trap & Upgradability** | Whether any "decentralized" system can truly eliminate privileged keys — evidence from DAO DAO's `Unauthorized` check | ~400 words |
-| **11. Controversy VI: Sustainable DAO Economics** | Can on-chain token economies truly replace off-chain value creation? Gov4Git's infrastructure model. | ~350 words |
-| **12. Controversy VII: Legal & Regulatory Gaps** | What happens when a smart contract decision crosses into real-world law? | ~350 words |
+| **2. The Blockchain Voting Landscape** | Survey: BlockChainVoting, BlockVotes, jormungandr, victionchain, Moscow | ~600 words |
+| **3. Democracy Earth & the Social Smart Contract** | The foundational paper: vote tokens, liquid democracy, Proof of Identity, Agora | ~700 words |
+| **4. How On-Chain Voting Actually Works** | Code-level walkthrough: Neufund state machine, quadratic voting, commit-reveal, modular architecture, adapter pattern, role-based access, timing windows, quorum enforcement, ERC20 voting, ring signatures | ~1,200 words |
+| **5. Modular DAO Architecture** | DAO DAO's composable modules, Condorcet voting, ENS governance in practice | ~600 words |
+| **6. Controversy I: Plutocracy & Whale Domination** | Token-weighted voting, quadratic countermeasures, CIP-1694 debate, the fundamental unfairness of wealth-based power | ~500 words |
+| **7. Controversy II: The Secrecy–Verifiability Dilemma** | Ring signatures, zk-SNARKs, commit-reveal, the impossible triangle, and what Democracy Earth chose | ~500 words |
+| **8. Controversy III: The Sybil & Identity Problem** | On-chain identity, attention mining, proof-of-personhood, and the impossibility of anonymous democracy | ~450 words |
+| **9. Controversy IV: The Admin Trap & Upgradability** | Whether any "decentralized" system can truly eliminate privileged keys — evidence from Neufund's `isUniverseManager` | ~400 words |
+| **10. Controversy V: Low Participation & the Apathy Paradox** | Why <10% turnout undermines the legitimacy of "decentralized" governance — and how Neufund's state machine implicitly delegates | ~350 words |
+| **11. Controversy VI: Sustainable DAO Economics** | Can on-chain token economies truly replace off-chain value creation? The Neufund token lifecycle model | ~350 words |
+| **12. Controversy VII: Legal & Regulatory Gaps** | What happens when a smart contract decision crosses into real-world law? Evidence from `ActionLegalRep` | ~350 words |
 | **13. Conclusion** | A grounded vision: what would a genuinely democratic on-chain system require? | ~400 words |
 
-**Total target:** ~6,000–6,500 words
+**Total target:** ~6,500–7,000 words
 
 ---
 
 ## Appendix — Key References
 
-### Repositories Discovered
+### Repositories
 
-| Resource | Link | Stars | License |
-|---|---|---|---|
-| BlockChainVoting (full-stack E-voting) | [mehtaAnsh/BlockChainVoting](https://github.com/mehtaAnsh/BlockChainVoting) | 450 ⭐ | MIT |
-| BlockVotes (ring-signature privacy voting) | [yfgeek/BlockVotes](https://github.com/yfgeek/BlockVotes) | 283 ⭐ | — |
-| Jormungandr (Cardano privacy voting node) | [cardano-foundation/jormungandr](https://github.com/cardano-foundation/jormungandr) | 368 ⭐ | — |
-| Victionchain (PoS voting consensus) | [BuildOnViction/victionchain](https://github.com/BuildOnViction/victionchain) | 182 ⭐ | — |
-| Decentralized Voting System (Azure Blockchain) | [naklecha/decentralized-voting-system](https://github.com/naklecha/decentralized-voting-system) | 113 ⭐ | — |
-| DAO DAO (modular DAO contracts, Rust/CosmWasm) | [DA0-DA0/dao-contracts](https://github.com/DA0-DA0/dao-contracts) | 218 ⭐ | BSD-3-Clause |
-| Gov4Git (decentralized governance for Git) | [gov4git/gov4git](https://github.com/gov4git/gov4git) | 216 ⭐ | Apache/MIT |
-| ENS Governance Contracts | [ensdomains/governance-contracts](https://github.com/ensdomains/governance-contracts) | 159 ⭐ | — |
-| Virtual Protocol Governance | [Virtual-Protocol/protocol-contracts](https://github.com/Virtual-Protocol/protocol-contracts) | 101 ⭐ | — |
-| TON Vote (DAO governance frontend) | [orbs-network/ton-vote](https://github.com/orbs-network/ton-vote) | 108 ⭐ | — |
+| Resource | Link | Stars |
+|---|---|---|
+| Democracy Earth (Social Smart Contract paper) | [DemocracyEarth/paper](https://github.com/DemocracyEarth/paper) | 617 ⭐ |
+| Sovereign (Liquid Democracy app) | [DemocracyEarth/sovereign](https://github.com/DemocracyEarth/sovereign) | — |
+| BlockChainVoting (full-stack E-voting) | [mehtaAnsh/BlockChainVoting](https://github.com/mehtaAnsh/BlockChainVoting) | 450 ⭐ |
+| BlockVotes (ring-signature privacy voting) | [yfgeek/BlockVotes](https://github.com/yfgeek/BlockVotes) | 283 ⭐ |
+| Jormungandr (Cardano privacy voting node) | [cardao-foundation/jormungandr](https://github.com/cardao-foundation/jormungandr) | 368 ⭐ |
+| Victionchain (PoS voting consensus) | [BuildOnViction/victionchain](https://github.com/BuildOnViction/victionchain) | 182 ⭐ |
+| DAO DAO (modular DAO contracts, Rust) | [DA0-DA0/dao-contracts](https://github.com/DA0-DA0/dao-contracts) | 218 ⭐ |
+| ENS Governance Contracts | [ensdomains/governance-contracts](https://github.com/ensdomains/governance-contracts) | 159 ⭐ |
+| Neufund Platform Contracts (Gov.sol) | [Neufund/platform-contracts](https://github.com/Neufund/platform-contracts) | — |
+| Trianum (Commit-reveal voting) | [Trinos-Strategy/Trianum](https://github.com/Trinos-Strategy/Trianum) | — |
+| p2peace-zkemail (Quadratic voting) | [RonTuretzky/p2peace-zkemail](https://github.com/RonTuretzky/p2peace-zkemail) | — |
+| Arcana (Quadratic Voting guide) | [Kuuhaku-web/Arcana/VOTING_GUIDE.md](https://github.com/Kuuhaku-web/Arcana/blob/main/VOTING_GUIDE.md) | — |
+| Council (flexible DAO governance) | [delvtech/council](https://github.com/delvtech/council) | 92 ⭐ |
+| Decentraland Governance | [decentraland/governance](https://github.com/decentraland/governance) | 49 ⭐ |
+| Joystream Pioneer (DAO governance app) | [Joystream/pioneer](https://github.com/Joystream/pioneer) | 43 ⭐ |
 
-### Key Source Code Analyzed
+### Key Code Files
 
-| File | Repo | Lines | What It Shows |
-|---|---|---|---|
-| `contracts/voting/dao-voting-cw20-staked/src/contract.rs` | DA0-DA0/dao-contracts | 470 | Full voting-power module: staking-at-height, active thresholds, query interface, submessage-based instantiation |
+| File | Repository | What It Shows |
+|---|---|---|
+| `contracts/Company/Gov.sol` (916 lines) | Neufund/platform-contracts | Full governance state machine: TokenVotingRule, ActionBylaw, ResolutionExecution, escalation logic, quorum enforcement, SafeMath tallying |
+| `contracts/libraries/DataStructures.sol` | Trinos-Strategy/Trianum | Commit-reveal phase machine: DualAward, Commit, Reveal |
+| `contracts/src/IncentiveRegistry.sol` | RonTuretzky/p2peace-zkemail | Multi-phase governance: propose → discuss → quadratic vote, with 30-day cooldown |
+| `contracts/voting/dao-voting-cw20-staked/` | DA0-DA0/dao-contracts | Modular staking-based voting power module in CosmWasm |
+| `contracts/proposal/dao-proposal-condorcet/` | DA0-DA0/dao-contracts | Ranked-choice Condorcet voting module |
+
+### Academic & Theoretical References
+
+| Resource | Link |
+|---|---|
+| Hosp & Vora — Information-Theoretic Voting Security | https://pdfs.semanticscholar.org/24d5/5c866a7317dae11d37518b312ee460bc33d3.pdf |
+| Democracy Earth — Colombian Digital Plebiscite Pilot | https://words.democracy.earth/a-digital-referendum-for-colombias-diaspora-aeef071ec014 |
+| Cardano CIP-1694 — On-Chain Decentralized Governance | https://github.com/cardao-foundation/CIPs/pull/380 (303 comments) |
+| OECD — Embracing Innovation in Government | https://www.oecd.org/gov/innovative-government/embracing-innovation-in-government-colombia.pdf |
 
 ### Key Concepts
 
 | Concept | Description |
 |---|---|
-| **Quadratic Voting** | Cost = votes²; prevents whale domination by making large vote purchases prohibitively expensive |
+| **Quadratic Voting** | Cost = votes²; makes whale domination economically irrational |
 | **Liquid Democracy** | Hybrid direct + delegated voting with tag-limited and transitive delegation |
 | **Proof of Identity** | Attention mining to detect Sybil attackers without central authority |
-| **Staking-at-Height** | Querying voting power at a specific block height, enabling time-weighted governance |
-| **Active Thresholds** | Minimum participation requirements (absolute or percentage) before a vote becomes binding |
+| **Commit-Reveal** | Two-phase voting: commit hash first, reveal later — prevents coercion |
+| **Ring Signatures** | Cryptographic technique to hide signer identity within a group (Monero-style) |
+| **zk-SNARKs** | Zero-knowledge proofs that verify computation without revealing inputs |
+| **Adapter/Slot Pattern** | Indirection layer for swappable contracts (upgradeability) |
+| **Campaigning State** | Quorum-building phase before votes are counted — prevents low-turnout legitimacy |
 | **Condorcet Voting** | Ranked-choice method that finds the candidate who beats all others pairwise |
-| **Ring Signatures** | Cryptographic technique to hide signer identity within a group (BlockVotes) |
-| **zk-SNARKs** | Zero-knowledge proofs that verify computation without revealing inputs (Democracy Earth / Sovereign) |
-| **Adapter/Slot Pattern** | Indirection layer for swappable contracts (upgradeability without breaking interfaces) |
-| **Gov4Git Model** | Governance running on git infrastructure — participation as byproduct of development |
+| **ActionBylaw** | Per-action governance constitution: who votes, how long, what threshold, what rule |
+| **ResolutionExecution** | Ballot box struct: promise (hash), state machine, deadlines, execution steps |
+| **State Machine Governance** | Governance as a finite state machine (Setup → Funded → Closing → Closed) |
+| **SafeMath Tallying** | Fixed-point arithmetic with overflow protection — a mundane detail with political stakes |
 
 ---
 
-*This outline was generated from live GitHub research on blockchain voting, DAO
-governance, and on-chain voting contract implementations. It draws on 10+
-repositories discovered through search, 470 lines of actual Rust contract source
-from DA0-DA0, and community discussions across the decentralized governance
-ecosystem. All repository data (stars, languages, licenses) was verified as of
-the date of research.*
+*This outline was generated from GitHub research conducted on [date]. It draws on
+10+ repositories, 20+ code search results across Solidity, Rust, and TypeScript,
+and community discussions including the Cardano CIP-1694 proposal (303 comments).
+All code patterns are derived from actual on-chain contract implementations.*
