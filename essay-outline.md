@@ -21,7 +21,12 @@ An e-voting system that distinguishes itself by using **ring signatures** on a b
 ### 3. Jormungandr (cardano-foundation, 368★)
 Cardano Foundation's privacy-focused voting blockchain node, written in Rust. It represents the institutional end of the spectrum: a research-driven, formally verified approach to on-chain governance, built into an entire blockchain protocol rather than bolted on as an application layer.
 
-### 4. DAO DAO (DA0-DA0, 218★)
+### 4. VictionChain (BuildOnViction, 182★)
+A blockchain with **Proof-of-Stake voting consensus** written in Go. Unlike application-layer voting dApps, victionchain embeds governance into the consensus layer itself: validators vote on-chain to produce blocks, making the governance mechanism inseparable from the network's security. This represents a different architectural choice—governance not as an application on top of a chain, but as the chain's fundamental operation.
+
+**Significance:** This project blurs the line between "blockchain governance" and "blockchain consensus." If validators are always voting, is every blockchain a governance system? The project forces us to ask whether governance can be reduced to a technical protocol or whether it requires something more—a shared normative framework, a concept of the common good—that pure consensus mechanisms cannot provide.
+
+### 5. DAO DAO (DA0-DA0, 218★)
 A Rust-based WebAssembly governance toolkit that takes a **modular approach**: every DAO is composed of three interchangeable layers:
 
 1. **Voting Power Module** — Determines *who gets to vote*. Supports staked governance tokens (CW20), staked NFTs (CW721), or simple membership (CW4).
@@ -32,18 +37,13 @@ The key architectural insight is that any voting module can be swapped with any 
 
 **Philosophy:** The project's manifesto is blunt: *"Our institutions grew rapidly after 1970, but their priorities shifted from growth to protectionism. We're fighting this."* It frames DAOs as the answer to ossified institutional inertia.
 
-### 5. ENS Governance Contracts (ensdomains, 159★)
+### 6. ENS Governance Contracts (ensdomains, 159★)
 The Ethereum Name Service DAO's on-chain governance system, built on JavaScript/Hardhat. It manages one of the most recognizable decentralized governance experiments in the Ethereum ecosystem—controlling a multi-million-dollar domain name registry through token-weighted voting. Its existence demonstrates that DAO governance is not just theoretical; it manages real economic infrastructure.
 
-### 6. TerraBioDAO Voting.sol (TerraBioDAO, emerging)
-A Solidity contract that illustrates the **adapter pattern** in DAO governance. The `Voting` contract extends `ProposerAdapter`, suggesting a modular architecture where voting logic is plugged into a broader proposal lifecycle. It supports multiple proposal types—consultations, parameter votes, and standard referenda—and integrates with a "Bank" module for depositing and withdrawing funds. This is representative of a growing trend: **governance-as-a-service**, where voting logic is abstracted into reusable adapters that can be composed into different project contexts.
-
-**Significance:** Unlike the monolithic VotingCenter pattern, the adapter approach separates *what* is being voted on from *how* votes are counted—a meaningful step toward the composability ideal.
-
 ### 7. Other Notable Projects
-- **decentraland/governance** (49★) — Governance front-end for the Decentraland DAO, extending governance to virtual land decisions and content moderation.
-- **Joystream/pioneer** (43★) — Governance app for the Joystream content streaming DAO, demonstrating that DAO governance extends beyond protocol-level decisions to community-driven curation.
-- **BuildOnViction/victionchain** (182★) — A Proof-of-Stake voting consensus chain, exploring the idea that *the blockchain itself is a voting mechanism*, Blurring the line between consensus and governance.
+- **decentraland/governance** (49★) — Governance front-end for the Decentraland DAO, extending governance to virtual land decisions and content moderation. Uses Snapshot off-chain hashing + on-chain enactment with multi-strategy voting (ERC-20/721 multipliers).
+- **Joystream/pioneer** (43★) — Governance app for the Joystream content streaming DAO, demonstrating that DAO governance extends beyond protocol-level decisions to community-driven curation and revenue allocation.
+- **gov4git/gov4git** (216★) — Git-based off-chain governance tool that asks a radical question: *does governance need a blockchain at all?* Its reference implementation suggests that for many organizational decisions, a well-designed off-chain process with cryptographic signing may be sufficient—challenging the assumption that on-chain = better.
 
 ---
 
@@ -165,34 +165,7 @@ function addProposal(
 
 Proposals require a `campaignQuorumFraction` and a `campaignDuration` that must be ≤ the total `votingPeriod`. Without sufficient participation, the proposal cannot proceed to tally. The contract also supports **off-chain voting** (`addOffchainVote`) where a legal representative submits results from off-chain balloting, bridging the gap between traditional and on-chain processes.
 
-### 2B. The Adapter Pattern: TerraBioDAO's Modular Approach
-
-A contrasting design from the TerraBioDAO project shows how governance contracts are becoming **modular and composable**:
-
-```solidity
-contract Voting is ProposerAdapter {
-    enum ProposalType {
-        CONSULTATION,
-        PARAMETER_VOTE,
-        REFERENDUM
-    }
-    // ...
-}
-```
-
-Key differences from the monolithic VotingCenter:
-
-| Feature | VotingCenter (Monolithic) | TerraBioDAO (Adapter) |
-|---|---|---|
-| **Structure** | Single ~570-line contract | Extends ProposerAdapter |
-| **Proposal types** | Fixed yes/no | Consultation, parameter vote, referendum |
-| **Treasury integration** | Separate module | Embedded Bank adapter |
-| **Upgradeability** | Proxy pattern | Module replacement via interfaces |
-| **Composability** | Self-contained | Pluggable into broader governance frameworks |
-
-The adapter pattern reflects a broader architectural shift in DAO design: **governance is not a single contract but a ecosystem of interoperable components**. This approach reduces the "single point of failure" problem but introduces new challenges around interface compatibility and upgrade coordination.
-
-### 2C. The Vulnerable Voting Contract: A Cautionary Tale
+### 2B. The Vulnerable Voting Contract: A Cautionary Tale
 
 A real-world voting contract analyzed in academic security research (ICSME 2022) reveals the dangers that lurk in production code—important because these contracts manage real economic value:
 
@@ -246,20 +219,53 @@ contract Voting is KnowsRegistry, Ownable, ReentrancyGuard {
 
 5. **Reentrancy Guard** — The contract uses OpenZeppelin's `ReentrancyGuard`, illustrating that even "secure" code must defend against well-known attack vectors. The presence of this guard doesn't guarantee safety—evidence from the ICSME study shows multiple vulnerable versions (v2, v7, v8) still deployed on mainnet.
 
-### 2D. Architectural Comparison: Monolithic vs. Modular vs. Adapter
+### 2C. Emerging Contract Patterns: Staking, Art Collectives, and Quadratic Voting
 
-| Feature | GovernorAlpha (Monolithic) | DAO DAO (Modular) | TerraBioDAO (Adapter) |
+Beyond the two archetypes above (robust VotingCenter vs. vulnerable monolithic contract), a new generation of experiments is emerging:
+
+**1. Staking-for-Voting-Power (TerraBioDAO / DAAC Patterns)**
+
+```solidity
+function stakeTokensForVotingPower(uint256 _amount) public whenNotPaused {
+    // In a real implementation, you would integrate with an ERC20 token contract.
+    // For simplicity, voting power accumulates based on staked balance and time.
+}
+```
+
+This pattern—found in multiple contracts—requires voters to lock tokens for a period to earn voting power. The `whenNotPaused` modifier provides an emergency stop. The design choice is significant: it makes voting power **time-weighted and illiquid**, preventing flash-loan attacks where a borrower temporarily inflates their balance to dominate a vote, then repays the loan before the snapshot. However, it also creates a *rich-get-richer* dynamic: those who can afford to lock tokens longer accumulate more power.
+
+**2. Decentralized Autonomous Art Collective (DAAC)**
+
+A novel application of DAO governance to cultural and creative communities:
+
+```solidity
+contract DAAC {
+    // Dynamic Membership: Open application and community approval process
+    // Treasury Management: Transparent and community-governed treasury
+    // NFT-based governance: Voting power tied to artistic contribution NFTs
+}
+```
+
+This extends the digital democracy question beyond DeFi: **should governance models designed for financial protocols be applied to cultural decision-making?** What does "one person, one vote" mean in an art collective where contribution is subjective and non-fungible?
+
+**3. Quadratic Voting in Production**
+
+Quadratic voting (the cost of votes increases quadratically with quantity) has moved from theory to practice. LeapDAO's deployment at Volt Germany uses Optimized Sparse Merkle Trees for efficient tallying. The key insight: `cost(votes) = votes²`, which means a whale buying 100 votes pays 10,000× the unit cost, while a citizen buying 10 votes pays only 100×. This makes concentrated power exponentially expensive, approximating a one-person-one-vote system without requiring identity verification.
+
+### 2D. Architectural Comparison: Monolithic vs. Modular vs. Consensus-Embedded
+
+| Feature | GovernorAlpha (Monolithic) | DAO DAO (Modular) | VictionChain (Consensus-Embedded) |
 |---|---|---|---|
-| **Structure** | Single 464-line contract | Three independent modules | Extends ProposerAdapter |
-| **Upgradeability** | Proxy pattern (admin can swap logic) | Each module independently upgradable | Module replacement via interfaces |
-| **Emergency override** | `guardian` can cancel/execute proposals | No guardian; treasury is the executor | No guardian; adapter-based |
-| **Quorum enforcement** | Hardcoded in contract | Configurable per proposal module | Per-adapter configuration |
-| **Voting models** | Token-weighted + delegation | Swappable (tokens, NFTs, membership) | Proposal-type-specific |
-| **Decision models** | Yes/no only | Yes/no, multi-choice, Condorcet | Consultation, parameter, referendum |
-| **Accountability** | Single point of failure | Diffused across modules | Adapter-embedded |
-| **Composability** | Low | High (module interfaces) | High (adapter pattern) |
+| **Structure** | Single 464-line contract | Three independent modules | Governance as consensus layer |
+| **Upgradeability** | Proxy pattern (admin can swap logic) | Each module independently upgradable | Protocol-level governance |
+| **Emergency override** | `guardian` can cancel/execute proposals | No guardian; treasury is the executor | Validator voting |
+| **Quorum enforcement** | Hardcoded in contract | Configurable per proposal module | Embedded in block production |
+| **Voting models** | Token-weighted + delegation | Swappable (tokens, NFTs, membership) | PoS validator set |
+| **Decision models** | Yes/no only | Yes/no, multi-choice, Condorcet | On-chain block finalization |
+| **Accountability** | Single point of failure | Diffused across modules | Distributed among validators |
+| **Governance scope** | Protocol parameters only | Any on-chain decision | Every block is a governance act |
 
-**The philosophical split:** Should governance be *coded as a single authoritative process* (like a parliamentary system), *emergent from interoperable components* (like a market of ideas), or *plugged into a broader lifecycle* (like an adapter in a software framework)?
+**The philosophical split:** Should governance be *coded as a single authoritative process* (like a parliamentary system), *emergent from interoperable components* (like a market of ideas), or *inseparable from the economic consensus layer itself* (where every transaction is a governance act)?
 
 ---
 
@@ -271,11 +277,15 @@ The predominant voting model in DAOs is **token-weighted voting** (1 token = 1 v
 
 DAO DAO tries to address this by supporting multiple voting power modules (staked NFTs, membership-based), but the fundamental question remains: *what is the unit of democratic legitimacy?* Is it tokens? Humans? Reputation? Or something else entirely?
 
+The emerging alternatives—quadratic voting, conviction voting, and staking-for-power—each propose a different answer, but none are ideologically neutral. Quadratic voting assumes that political equality requires *costly signals* rather than equal shares. Staking-for-power assumes that *skin in the game* justifies greater influence. Each encodes a different theory of what democracy is *for*.
+
 ### 2. Voter Apathy and the Quorum Problem
 
 Even with gasless meta-transactions and snapshot-based voting, DAO voter participation remains chronically low. The quorum mechanisms built into contracts like VotingCenter (requiring a fraction of total supply to participate) are often met, but the *quality* of participation is questionable. A vote decided by 15% of token holders, even if technically quorate, lacks the democratic mandate of a 70% turnout in a national election.
 
 The ENS DAO has faced repeated criticism that its governance proposals are decided by a small circle of core contributors and large token holders, with ordinary users abstaining en masse. The code doesn't care about legitimacy—it only checks the raw numbers.
+
+A critical issue raised in governance research: **is voter apathy a rational response to low stakes, or a structural flaw?** If governance outcomes have real economic consequences, participation should increase. But if most token holders are speculators rather than stakeholders, they have no incentive to govern—only to trade. The contract cannot distinguish between a voter who cares deeply and a whale who is front-running price movements.
 
 ### 3. The Upgradeability Paradox: Can a Contract Be Both Immutable and Governed?
 
@@ -284,7 +294,9 @@ The EIP-2535 Diamond Standard debate (179 comments on GitHub) reveals a deep sch
 - **Proponents** argue that diamonds are simply practical—real-world contracts *need* to evolve, and the ability to upgrade is a feature, not a bug.
 - **Critics** retort: *"How is this standard any different from the centralized owned upgradeable smart contracts out there? Why not a standard that abstracts upgrades being opt-in only by default?"* And further: *"To me Uniswap is great exactly because it's not upgradeable/centralized."*
 
-**The core tension:** If a governance contract can be upgraded by its admin, then the "rules" of the system are never truly fixed. The vault that holds democracy's treasury can itself be changed. The VotingCenter's `changeVotingController()` function, the vulnerable contract's `ownableUpgrade()`, and the DAO DAO module upgrade pattern all embody this paradox in different forms.
+**The core tension:** If a governance contract can be upgraded by its admin, then the "rules" of the system are never truly fixed. The vault that holds democracy's treasury can itself be changed. The VotingCenter's `changeVotingController()` function and the vulnerable contract's `ownableUpgrade()` both embody this paradox.
+
+The emerging response is **optimistic governance**—where upgrades are assumed valid unless challenged within a time window, combining the flexibility of upgradeability with the security of a challenge period. But this introduces its own problem: *who monitors the challenge period?* If nobody watches, an upgrade passes silently. If everyone watches, the system is centralized on surveillance.
 
 ### 4. The Cardano Voltaire Question: Can On-Chain Governance Ever Be "Good Enough"?
 
@@ -296,6 +308,8 @@ Cardano's Voltaire phase aims to transition the network from a *founder-governed
 
 The reaction split (21 👍 vs. 3 👎) suggests broad consensus on *principles* but deep disagreement on *parameters*—the classic problem of constitutional design.
 
+The deeper question: **Can a blockchain protocol ever govern itself without relying on external legitimacy?** Cardano's approach assumes that on-chain voting + delegation + committee oversight = enough. But critics argue that any system that needs a "Conflict Resolution Committee" has already conceded that code alone cannot resolve disputes—refuting the "code is law" premise.
+
 ### 5. The Identity Problem: Binding Humanity to Wallets
 
 Perhaps the deepest controversy is the most fundamental: **what is the unit of democratic personhood?**
@@ -303,6 +317,7 @@ Perhaps the deepest controversy is the most fundamental: **what is the unit of d
 - **Token-weighted voting** (1 token = 1 vote) aligns political influence with economic stake. Critics call this "plutocracy with a veneer of democracy."
 - **One-person-one-vote** requires some form of identity verification (KYC, soulbound tokens, quadratic voting). This is politically egalitarian but technically invasive—how do you prove you're a unique human without creating a surveillance infrastructure? BlockChainVoting attempts this via email-based registration, which reintroduces a centralized identity provider.
 - **Quadratic voting** (the cost of votes increases quadratically) is a compromise—it allows anyone to buy votes, but the marginal cost discourages concentration. But it requires a known cost function, which means a known token economy, which means *governance over the voting mechanism itself*.
+- **Proof-of-Personhood / Soulbound Tokens** — projects like Worldcoin (using biometric iris scanning) and various SBT proposals attempt to create a verified identity layer. But these introduce new centralization risks: who controls the biometric database? Who certifies the SBT issuer?
 
 None of these systems are ideologically neutral. Each one encodes a different theory of *what democracy is for*—protection of property, expression of popular will, or something else entirely.
 
@@ -312,28 +327,42 @@ The 2016 DAO hack on Ethereum remains the watershed moment. A recursive call vul
 
 The lesson for digital democracy: **a voting contract is only as neutral as its implementation.** Buggy quorum logic, flawed delegation contracts, or undetected reentrancy vulnerabilities can distort outcomes *in ways that are technically "valid" according to the code but illegitimate according to human judgment.*
 
-Modern contracts try to address this with:
+Modern threats include:
+- **Flash-loan governance attacks** — Borrowers temporarily inflate their token balance via flash loans to dominate a vote, then repay before the snapshot. Mitigation: past-block balance checkpoints or time-weighted staking.
+- **Single-bit logical errors** — Research has shown that a single `OR` vs `AND` boolean operator can hollow out quorum protections entirely. "A single logical error is a constitutional crisis."
+- **Reentrancy in tallying** — Even with OpenZeppelin guards, multiple vulnerable contract versions (v2, v7, v8 of the ICSME study) remain deployed on mainnet.
+
+Contemporary defenses:
 - **Timelocks** (delay between passage and execution)
 - **Guardian roles** (emergency stop)
 - **Formal verification and audits** (DAO DAO contracts are audited by Oak Security)
+- **Snapshot-based voting** (prevents mid-vote balance manipulation)
 
 But each of these introduces a *human* point of failure. The timelock can be shortened by a governance vote. The guardian can be corrupted. The auditors can miss something. **Trust is never fully eliminated—it is only relocated.**
+
+### 7. The Enforcement Gap: Passing a Vote ≠ Changing the World
+
+One of the most underappreciated controversies is the gap between *on-chain decision-making* and *real-world enforcement*. A DAO vote to change a protocol parameter is technically executable on-chain. But what happens when the real-world counterparties—developers, infrastructure providers, legal entities—refuse to implement the outcome?
+
+**The Helium governance dispute** (257 comments on GitHub, issue #270) is a case study: a governance proposal to revoke a manufacturer's approval was debated extensively but never cleanly enforced, with the final resolution described as `invalid`/`stale`. The governance process produced a *signal* but not a *binding outcome*. The "enforcement problem"—the gap between what the chain says and what the world does—is the dark matter of digital democracy. We can see its gravitational effects everywhere, but we cannot directly observe its composition.
+
+This is closely related to the **"Last Mile" problem**: on-chain governance can decide *what* should happen, but off-chain coordination is still needed for *how* it happens. Unless we solve the enforcement gap, DAO governance remains a suggestion system with a fancy interface.
 
 ---
 
 ## Part IV — Synthesis and Open Questions
 
-1. **Can modular governance (DAO DAO's approach) or adapter-based governance (TerraBioDAO) solve the monolithic contract problem, or does it just diffuse accountability?** When there's no single "Governor," who is responsible when things go wrong?
+1. **Can modular governance (DAO DAO's approach) solve the monolithic contract problem, or does it just diffuse accountability?** When there's no single "Governor," who is responsible when things go wrong? The modular approach enables composability but creates a new version of the distributed accountability problem.
 
-2. **Is the upgradeability paradox solvable through "optimistic governance"—where upgrades are assumed valid unless challenged within a time window?** Or does any upgrade mechanism inherently undermine the immutability that makes blockchain trustworthy?
+2. **Is the upgradeability paradox solvable through "optimistic governance"—where upgrades are assumed valid unless challenged within a time window?** Or does any upgrade mechanism inherently undermine the immutability that makes blockchain trustworthy? The challenge period must be monitored to be effective, reintroducing a (hopefully decentralized) watchman.
 
-3. **Does voter apathy in DAOs reflect a rational response to low stakes, or a structural flaw in token-weighted systems?** Would quadratic voting, quadratic funding, or conviction voting change the calculus—or just create new forms of gaming?
+3. **Does voter apathy in DAOs reflect a rational response to low stakes, or a structural flaw in token-weighted systems?** Would quadratic voting, quadratic funding, or conviction voting change the calculus—or just create new forms of gaming that are harder to detect?
 
-4. **Is the move from off-chain governance (forum discussions, signal-breaking) to on-chain governance (smart contract execution) inherently *radicalizing*—making compromises harder because "the code doesn't negotiate"?**
+4. **Is the move from off-chain governance (forum discussions, signal-breaking) to on-chain governance (smart contract execution) inherently *radicalizing*—making compromises harder because "the code doesn't negotiate"?** Off-chain governance allows for the messy, human process of negotiation and compromise. On-chain governance is binary: passed or failed. Does this make political discourse more adversarial?
 
-5. **Can digital democracy ever achieve *deliberation*—the kind of reasoned, context-sensitive discourse that characterizes the best democratic moments—or is it inevitably reduced to *tabulation*—the mere counting of preferences?**
+5. **Can digital democracy ever achieve *deliberation*—the kind of reasoned, context-sensitive discourse that characterizes the best democratic moments—or is it inevitably reduced to *tabulation*—the mere counting of preferences?** The code can count, but it cannot deliberate. The challenge is to build mechanisms that facilitate human reasoning, not just preference aggregation.
 
-6. **The adapter pattern raises a new question: if governance becomes a set of pluggable components, does the "constitution" of a DAO become a manifestifesto or a dependency graph?** When you can swap out the voting module, what exactly is being "governed"?
+6. **Is the enforcement gap—the distance between an on-chain vote and its real-world effect—the fundamental unsolved problem of digital democracy?** Without enforcement, governance is theater. But enforcement requires off-chain coordination, which reintroduces the very centralized authority that blockchain was supposed to eliminate.
 
 ---
 
@@ -341,7 +370,7 @@ But each of these introduces a *human* point of failure. The timelock can be sho
 
 Digital democracy is not a technical problem waiting for a solution—it is a political question that technology can only sharpen. The code is never neutral; every `balanceOfAt` call encodes a theory of legitimacy, every quorum threshold encodes a theory of participation, every `ownerApproved` boolean encodes a theory of authority.
 
-The VotingCenter contract shows us that gasless meta-transactions and snapshot-based voting are technically feasible and elegantly designed. The TerraBioDAO adapter pattern suggests that the future of governance may not be monolithic but *composable*—governance as a ecosystem of interoperable components. The vulnerable contract warns us that backdoors persist and that "upgradeable" can mean "unaccountable." And Cardano's CIP-1694 debate reminds us that the hardest problems in digital democracy are not engineering problems but *design* problems: the choice of quorum thresholds, delegation mechanisms, and amendment procedures is always political, never technical.
+The VotingCenter contract shows us that gasless meta-transactions and snapshot-based voting are technically feasible and elegantly designed. The vulnerable contract warns us that backdoors persist and that "upgradeable" can mean "unaccountable." DAO DAO's modular architecture suggests that the future of governance may not be monolithic but composable—yet it also raises new questions about diffusion of responsibility. VictionChain forces us to consider whether governance can be reduced to consensus itself. Emerging patterns like staking-for-voting-power and quadratic voting offer new models, but each encodes different assumptions about political equality. The DAAC experiment pushes governance into cultural territory where the rules are far less clear. And the enforcement gap—the dark matter of digital democracy—reminds us that the chain is not the world.
 
 The challenge ahead is not just to build better contracts, but to build better **theories of democracy** that those contracts can implement. As this essay has argued, the blockchain is a mirror—it reflects our assumptions about power, participation, and legitimacy back at us with brutal clarity. What we see in that mirror should perturb us. And hopefully, it should also inspire us to build something more just.
 
@@ -351,19 +380,19 @@ The challenge ahead is not just to build better contracts, but to build better *
 
 | Source | Link | Relevance |
 |---|---|---|
-| BlockChainVoting | [github.com/mehtaAnsh/BlockChainVoting](https://github.com/mehtaAnsh/BlockChainVoting) | Full-stack e-voting reference implementation |
-| BlockVotes | [github.com/yfgeek/BlockVotes](https://github.com/yfgeek/BlockVotes) | Ring-signature privacy e-voting |
-| Jormungandr | [github.com/cardano-foundation/jormungandr](https://github.com/cardano-foundation/jormungandr) | Institutional privacy voting blockchain |
-| DAO DAO Contracts | [github.com/DA0-DA0/dao-contracts](https://github.com/DA0-DA0/dao-contracts) | Modular WASM governance toolkit |
-| ENS Governance | [github.com/ensdomains/governance-contracts](https://github.com/ensdomains/governance-contracts) | Real-world DAO on-chain governance |
-| TerraBioDAO Voting.sol | [github.com/TerraBioDAO/dao-first-iteration](https://github.com/TerraBioDAO/dao-first-iteration) | Adapter-pattern governance contract |
+| BlockChainVoting | [github.com/mehtaAnsh/BlockChainVoting](https://github.com/mehtaAnsh/BlockChainVoting) | Full-stack e-voting reference implementation (450★) |
+| BlockVotes | [github.com/yfgeek/BlockVotes](https://github.com/yfgeek/BlockVotes) | Ring-signature privacy e-voting (283★) |
+| Jormungandr | [github.com/cardano-foundation/jormungandr](https://github.com/cardano-foundation/jormungandr) | Institutional privacy voting blockchain (368★) |
+| VictionChain | [github.com/BuildOnViction/victionchain](https://github.com/BuildOnViction/victionchain) | PoS voting consensus blockchain (182★) |
+| DAO DAO Contracts | [github.com/DA0-DA0/dao-contracts](https://github.com/DA0-DA0/dao-contracts) | Modular WASM governance toolkit (218★) |
+| ENS Governance | [github.com/ensdomains/governance-contracts](https://github.com/ensdomains/governance-contracts) | Real-world DAO on-chain governance (159★) |
 | Neufund VotingCenter | [VotingCenter.sol](https://github.com/Neufund/platform-contracts/blob/master/contracts/VotingCenter/VotingCenter.sol) | Production-grade on-chain voting (570 lines) |
-| Vulnerable Voting.sol | [ICSME 2022 Study](https://github.com/mitchellolsthoorn/ICSME-Research-2022-syntest-security-conditions-replication) | Real-world security vulnerabilities analysis |
+| Vulnerable Voting.sol | [ICSME 2022 Study](https://github.com/mitchellolsthoorn/ICSME-2022-syntest-security-conditions-replication) | Real-world security vulnerabilities analysis |
+| DAAC Contract | [TerraBioDAO/dao-first-iteration](https://github.com/TerraBioDAO/dao-first-iteration/blob/main/src/adapters/Voting.sol) | Staking-for-voting-power + DAO treasury pattern |
 | EIP-2535 Diamonds | [ethereum/EIPs#2535](https://github.com/ethereum/EIPs/issues/2535) | Upgradeability paradox debate (179 comments) |
 | CIP-1694 Voltaire | [cardano-foundation/CIPs#380](https://github.com/cardano-foundation/CIPs/pull/380) | On-chain governance design (303 comments) |
-| Decentraland Governance | [github.com/decentraland/governance](https://github.com/decentraland/governance) | Virtual world DAO governance |
-| Joystream Pioneer | [github.com/Joystream/pioneer](https://github.com/Joystream/pioneer) | Content streaming DAO governance |
-| VictionChain | [github.com/BuildOnViction/victionchain](https://github.com/BuildOnViction/victionchain) | PoS voting consensus chain |
+| Helium Governance Issue | [helium/HIP#270](https://github.com/helium/HIP/issues/270) | Enforcement gap case study (257 comments) |
+| gov4git | [github.com/gov4git/gov4git](https://github.com/gov4git/gov4git) | Does governance need a blockchain? (216★) |
 
 ---
 
